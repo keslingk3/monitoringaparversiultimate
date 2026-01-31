@@ -5,957 +5,739 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Monitoring APAR - RSJMM Bogor</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* SHAKE ANIMATION FOR LOADING */
-        @keyframes shake { 
-            0% { transform: rotate(0deg); } 
-            25% { transform: rotate(-15deg); } 
-            50% { transform: rotate(0deg); } 
-            75% { transform: rotate(15deg); } 
-            100% { transform: rotate(0deg); } 
-        }
-        .animate-shake { animation: shake 0.5s infinite ease-in-out; }
-
-        body { display: flex; flex-direction: column; min-height: 100vh; background-color: #f3f4f6; }
-        .notif-scroll::-webkit-scrollbar { width: 6px; }
-        .notif-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .notif-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .floating-icon { position: absolute; opacity: 0.15; color: white; animation: float 6s ease-in-out infinite; z-index: 0; }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
+        .delay-1 { animation-delay: 0s; top: 10%; left: 10%; font-size: 4rem; }
+        .delay-2 { animation-delay: 2s; top: 20%; right: 15%; font-size: 3rem; }
+        .delay-3 { animation-delay: 4s; bottom: 15%; left: 20%; font-size: 5rem; }
+        .delay-4 { animation-delay: 1s; bottom: 10%; right: 10%; font-size: 4rem; }
+        .delay-5 { animation-delay: 3s; top: 50%; left: 50%; font-size: 6rem; opacity: 0.05; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .show-on-capture { display: none; }
         .capturing .show-on-capture { display: block; }
         .capturing .no-print { display: none !important; }
         .capturing { border-radius: 0 !important; border: 1px solid #ddd; }
-        
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95); z-index: 9999;
-            display: none; justify-content: center; align-items: center; flex-direction: column;
-        }
+        body.public-mode .admin-only { display: none !important; }
+        body.scan-mode #sidebar { display: none !important; }
+        body.scan-mode #top-header { display: none !important; }
+        body.scan-mode #main-content { margin-left: 0 !important; width: 100% !important; padding-top: 0 !important; }
+        body.scan-mode main { padding: 1rem !important; }
+        .active-nav { background-color: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
+        .inactive-nav { color: #64748b; }
+        .inactive-nav:hover { background-color: #f8fafc; color: #334155; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
         #toast-msg { display: none; transition: opacity 0.5s ease; }
-        
-        /* Modal Style */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
-        
-        /* PRINT STYLING */
-        @media print {
-            body * { visibility: hidden; }
-            body.printing-label #labelPrintArea, body.printing-label #labelPrintArea * { visibility: visible; }
-            body.printing-label #labelPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 20px; }
-            body.printing-all #printAllArea, body.printing-all #printAllArea * { visibility: visible; }
-            body.printing-all #printAllArea { position: absolute; left: 0; top: 0; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
-            .qr-card { border: 1px solid #000; padding: 10px; text-align: center; page-break-inside: avoid; }
-            body:not(.printing-label):not(.printing-all) .no-print { display: none !important; }
-            body:not(.printing-label):not(.printing-all) .print-area, body:not(.printing-label):not(.printing-all) .print-area * { display: block; visibility: visible; }
-        }
+        @media print { body * { visibility: hidden; } body.printing-label #labelPrintArea, body.printing-label #labelPrintArea * { visibility: visible; } body.printing-label #labelPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 20px; } body.printing-all #printAllArea, body.printing-all #printAllArea * { visibility: visible; } body.printing-all #printAllArea { position: absolute; left: 0; top: 0; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; } .qr-card { border: 1px solid #000; padding: 10px; text-align: center; page-break-inside: avoid; } body:not(.printing-label):not(.printing-all) .no-print { display: none !important; } }
     </style>
 </head>
 <body class="text-gray-800 font-sans" onclick="app.closeDropdown(event)">
 
     <div id="loadingOverlay">
-        <div class="animate-shake mb-4 text-red-600">
-            <i class="fa-solid fa-fire-extinguisher text-6xl drop-shadow-lg"></i>
-        </div>
+        <div class="mb-4 text-blue-600 animate-bounce"><i class="fa-solid fa-fire-extinguisher text-6xl drop-shadow-lg"></i></div>
         <h2 class="text-xl font-bold text-gray-700">Sedang Memproses...</h2>
         <p class="text-sm text-gray-500" id="loadingText">Mohon tunggu sebentar ya</p>
     </div>
+    <div id="toast-msg"></div>
 
-    <div id="login-screen" class="fixed inset-0 bg-red-900 z-[100] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full fade-in relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-red-600"></div>
-            <div class="text-center mb-8">
-                <div class="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                    <i class="fa-solid fa-fire-extinguisher text-5xl text-red-600"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-gray-800">APAR MONITOR</h1>
-                <p class="text-xs text-red-500 font-bold uppercase tracking-widest mt-1">Instalasi K3KL RSJMM</p>
+    <div id="login-screen" class="hidden fixed inset-0 bg-gradient-to-br from-blue-900 to-blue-600 z-[100] flex items-center justify-center p-4 overflow-hidden">
+        <i class="fa-solid fa-fire-extinguisher floating-icon delay-1"></i>
+        <i class="fa-solid fa-helmet-safety floating-icon delay-2"></i>
+        <i class="fa-solid fa-biohazard floating-icon delay-3"></i>
+        <i class="fa-solid fa-notes-medical floating-icon delay-4"></i>
+        <i class="fa-solid fa-hospital floating-icon delay-5"></i>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden relative z-10 fade-in h-auto md:h-[500px]">
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white text-gray-800 relative">
+                <div class="mb-6"><h2 class="text-3xl md:text-4xl font-extrabold text-blue-800 mb-2">WELCOME BACK !</h2><p class="text-gray-500 text-sm">Enter your ID and Password to continue</p></div>
+                <div class="mt-auto border-l-4 border-green-500 pl-4 py-2"><p class="text-gray-600 italic font-medium text-sm">"INSTALASI KESLING DAN K3RS"</p><p class="text-xs text-gray-400 mt-1 uppercase tracking-wide font-bold">PKJN RS MARZOEKI MAHDI BOGOR</p></div>
             </div>
-            <form onsubmit="app.handleLogin(event)">
-                <div class="mb-4"><label class="block text-gray-600 text-xs font-bold mb-2 uppercase">Username</label><input type="text" id="loginUser" class="w-full border p-3 rounded-lg" placeholder="Username" required></div>
-                <div class="mb-8"><label class="block text-gray-600 text-xs font-bold mb-2 uppercase">Password</label><input type="password" id="loginPass" class="w-full border p-3 rounded-lg" placeholder="Password" required></div>
-                <button type="submit" class="w-full bg-red-700 text-white font-bold py-3.5 rounded-lg hover:bg-red-800 transition shadow-lg">MASUK APLIKASI</button>
-            </form>
-            <p class="text-center text-[10px] text-gray-400 mt-8 border-t pt-4">© 2025 Sistem Monitoring APAR Ver Ultimate</p>
+            <div class="w-full md:w-1/2 p-8 md:p-12 bg-gradient-to-br from-blue-600 to-blue-700 text-white flex flex-col justify-center">
+                <div class="text-center mb-8">
+                    <div class="bg-white/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm border border-white/30 p-2">
+                        <img src="https://lh3.googleusercontent.com/d/1me_05hMa4jA-ZyFUGQHGRApWLtV-mHgS" alt="Logo" class="w-full h-full object-contain">
+                    </div>
+                    <h3 class="text-xl font-bold tracking-wide">Sign In to Access</h3><h1 class="text-2xl font-extrabold tracking-widest text-white/90">APAR MONITOR</h1>
+                </div>
+                <form onsubmit="app.handleLogin(event)" class="space-y-4">
+                    <div class="relative group"><i class="fa-solid fa-user absolute left-4 top-3.5 text-blue-200 group-focus-within:text-white transition"></i><input type="text" id="loginUser" class="w-full bg-white/20 border border-white/30 rounded-lg py-3 pl-12 pr-4 text-white placeholder-blue-200 focus:outline-none focus:bg-white/30 focus:border-white transition" placeholder="Enter Username" required></div>
+                    <div class="relative group"><i class="fa-solid fa-lock absolute left-4 top-3.5 text-blue-200 group-focus-within:text-white transition"></i><input type="password" id="loginPass" class="w-full bg-white/20 border border-white/30 rounded-lg py-3 pl-12 pr-4 text-white placeholder-blue-200 focus:outline-none focus:bg-white/30 focus:border-white transition" placeholder="Enter Password" required></div>
+                    <button type="submit" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 rounded-lg shadow-lg transform hover:-translate-y-0.5 transition duration-200 mt-4 uppercase tracking-wider">LOGIN</button>
+                    <button type="button" onclick="app.cancelLogin()" class="w-full text-center text-xs text-blue-200 hover:text-white mt-4 underline decoration-blue-400/50">Lupa Password ? Hubungi Super Admin !!</button>
+                </form>
+            </div>
+        </div>
+        <div class="absolute bottom-4 text-white/50 text-[10px]">Copyright ©2026 Instalasi K3KL All Rights Reserved</div>
+    </div>
+
+    <div id="scan-choice-screen" class="hidden fixed inset-0 bg-gray-100 z-[90] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full fade-in text-center border-t-8 border-blue-600 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full blur-2xl"></div><div class="absolute -bottom-10 -left-10 w-32 h-32 bg-green-50 rounded-full blur-2xl"></div>
+            <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce shadow-inner"><i class="fa-solid fa-qrcode text-5xl text-blue-600"></i></div>
+            <h2 class="text-2xl font-extrabold text-gray-800 mb-2">APAR Terdeteksi!</h2><p class="text-sm text-gray-500 mb-8" id="scanChoiceKode">Silakan pilih menu akses anda:</p>
+            <button onclick="app.handleScanOption('inspect')" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg mb-4 flex items-center gap-4 transition transform hover:scale-105 group">
+                <div class="bg-white/20 p-3 rounded-lg group-hover:bg-white/30 transition"><i class="fa-solid fa-user-shield text-2xl"></i></div>
+                <div class="text-left flex-1"><div class="text-[10px] uppercase text-blue-100 tracking-wider font-bold">Login Petugas</div><div class="text-lg leading-tight">INSPEKSI</div></div><i class="fa-solid fa-chevron-right text-blue-200"></i>
+            </button>
+            <button onclick="app.handleScanOption('history')" class="w-full bg-white border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 text-gray-700 font-bold py-4 px-6 rounded-xl shadow-sm flex items-center gap-4 transition transform hover:scale-105 group">
+                <div class="bg-gray-100 p-3 rounded-lg group-hover:bg-white transition"><i class="fa-solid fa-clock-rotate-left text-2xl text-gray-500 group-hover:text-blue-500"></i></div>
+                <div class="text-left flex-1"><div class="text-[10px] uppercase text-gray-400 tracking-wider font-bold group-hover:text-blue-400">Akses Publik</div><div class="text-lg leading-tight text-gray-800 group-hover:text-blue-700">LIHAT RIWAYAT</div></div><i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-blue-300"></i>
+            </button>
         </div>
     </div>
 
-    <div id="main-app" class="hidden flex flex-col min-h-screen">
-        <nav class="bg-red-700 text-white shadow-lg no-print sticky top-0 z-[60]">
-            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="app.navigate('dashboard')">
-                    <i class="fa-solid fa-fire-extinguisher text-3xl"></i>
-                    <div class="flex flex-col">
-                        <span class="text-xl font-bold tracking-wide leading-none">APAR Monitor <span class="text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top" id="statusOnlineBadge">ONLINE</span></span>
-                        <span class="text-xs font-light text-red-100 mt-1">Instalasi K3KL RSJMM Bogor</span>
-                    </div>
+    <div id="main-app" class="hidden flex h-screen overflow-hidden bg-gray-100">
+        
+        <aside id="sidebar" class="w-64 bg-white shadow-xl flex flex-col z-20 hidden md:flex h-full fixed top-0 left-0 transition-all duration-300">
+            <div class="h-20 flex items-center justify-between px-6 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <img src="https://lh3.googleusercontent.com/d/1me_05hMa4jA-ZyFUGQHGRApWLtV-mHgS" alt="Logo" class="w-10 h-10 object-contain">
+                    <div><h1 class="font-extrabold text-gray-800 text-xl leading-none tracking-tight">APAR MONITOR</h1><span class="text-[10px] text-blue-500 font-bold uppercase tracking-wider">Kesling dan K3RS</span></div>
                 </div>
+                <button onclick="app.toggleSidebar()" class="text-gray-400 hover:text-blue-600 transition" title="Tutup Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                <p class="px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Main Menu</p>
+                <button onclick="app.navigate('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition active-nav"><i class="fa-solid fa-house w-5 text-center"></i> Beranda</button>
+                <div class="admin-only space-y-2">
+                    <button onclick="app.navigate('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-user-tie w-5 text-center"></i> Profil User</button>
+                    <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan</button>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100"><button onclick="app.handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition shadow-sm"><i class="fa-solid fa-power-off"></i>Logout</button><div class="text-center mt-4 text-[10px] text-gray-300 font-medium">© 2026 Instalasi K3KL</div></div>
+        </aside>
+
+        <div id="main-content" class="flex-1 flex flex-col md:ml-64 transition-all duration-300 relative w-full">
+            
+            <header id="top-header" class="h-auto md:h-24 bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center px-8 py-5 z-10">
+                <div class="flex items-center gap-4">
+                    <button id="headerToggleBtn" onclick="app.toggleSidebar()" class="hidden text-white hover:text-blue-200 transition focus:outline-none mr-2">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                    <div><h2 class="text-2xl font-bold tracking-tight" id="pageTitle">BERANDA</h2><p class="text-blue-200 text-xs md:text-sm font-medium">Sistem Informasi Pelaporan & Monitoring APAR</p></div>
+                </div>
+                <div class="mt-4 md:mt-0 flex flex-col items-end">
+                    <div class="flex items-center gap-3 mb-1.5">
+                        <div class="text-right"><span class="block text-xs text-blue-200">Halo, <span id="headerUserName" class="block text-sm font-bold leading-none">Guest</span></div>
+                        <img id="headerProfileImg" src="" class="w-10 h-10 rounded-full border border-white/20 object-cover shadow-sm bg-white" alt="Profile">
+                    </div>
+                    <div class="flex items-center gap-3 text-[10px] md:text-xs text-blue-100 bg-blue-800/30 px-3 py-1.5 rounded-full border border-blue-500/30"><span id="headerDate"><i class="fa-regular fa-calendar mr-1"></i> -</span><span class="w-px h-3 bg-blue-500/50 mx-1"></span><span id="clockDisplay" class="font-mono font-bold text-yellow-300"><i class="fa-regular fa-clock mr-1"></i> --:--</span><span id="statusOnlineBadge" class="ml-2"></span></div>
+                </div>
+                <div class="absolute bottom-[-24px] right-8 flex gap-3">
+                     <button id="btnSync" onclick="app.syncOfflineData()" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-xl animate-pulse border-2 border-white hover:bg-yellow-300 transition"><i class="fa-solid fa-rotate"></i> Sync Data <span id="syncCount" class="bg-red-600 text-white px-1.5 rounded-full text-[10px]">0</span></button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8 pb-24">
                 
-                <div class="relative flex items-center gap-3">
-                    <div id="clockDisplay" class="hidden md:block text-sm font-mono font-bold bg-red-800 px-3 py-1 rounded text-red-100 border border-red-600 shadow-inner">
-                        --:--:--
+                <div id="view-dashboard" class="view-section fade-in space-y-8">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-fire-extinguisher text-6xl text-blue-600"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Total APAR</div><div class="text-4xl font-black text-gray-800" id="statTotal">0</div><div class="mt-2 w-12 h-1 bg-blue-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-clipboard-check text-6xl text-yellow-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Sudah Dicek</div><div class="text-4xl font-black text-gray-800" id="statChecked">0</div><div class="mt-2 w-12 h-1 bg-yellow-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-circle-check text-6xl text-green-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Kondisi Baik</div><div class="text-4xl font-black text-green-600" id="statGood">0</div><div class="mt-2 w-12 h-1 bg-green-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-triangle-exclamation text-6xl text-red-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Rusak / Exp</div><div class="text-4xl font-black text-red-600" id="statBad">0</div><div class="mt-2 w-12 h-1 bg-red-500 rounded-full"></div></div>
                     </div>
-
-                    <div class="relative z-[70]">
-                        <button id="btnNotif" onclick="app.toggleNotifications(event)" class="relative p-2 rounded-full hover:bg-red-800 transition focus:outline-none">
-                            <i class="fa-solid fa-bell text-xl"></i>
-                            <span id="notifBadge" class="hidden absolute top-0 right-0 bg-yellow-400 text-red-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-red-700 shadow-sm animate-pulse">0</span>
-                        </button>
-                        <div id="notifDropdown" class="hidden absolute right-0 mt-3 w-80 bg-white text-gray-800 rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-[80]">
-                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 font-bold text-sm text-gray-600 flex justify-between items-center">
-                                <span>Notifikasi Prioritas</span>
-                                <button onclick="app.checkNotifications()" class="text-xs text-blue-600 hover:text-blue-800 font-normal"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-                            </div>
-                            <div id="notifList" class="max-h-80 overflow-y-auto notif-scroll p-0"></div>
-                        </div>
-                    </div>
-                    <button onclick="app.handleLogout()" class="bg-red-800 hover:bg-red-900 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 border border-red-600 transition"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
-                </div>
-            </div>
-        </nav>
-
-        <main class="container mx-auto px-4 py-6 relative flex-1">
-            <div id="view-dashboard" class="view-section fade-in">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-blue-500"><div class="text-gray-500 text-[10px] uppercase font-bold">Total APAR</div><div class="text-2xl font-bold text-gray-800" id="statTotal">0</div></div>
-                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-yellow-500"><div class="text-gray-500 text-[10px] uppercase font-bold">Sudah Dicek (Bulan Ini)</div><div class="text-2xl font-bold text-gray-800" id="statChecked">0</div></div>
-                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-green-500"><div class="text-gray-500 text-[10px] uppercase font-bold">Kondisi Baik</div><div class="text-2xl font-bold text-green-600" id="statGood">0</div></div>
-                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-red-500"><div class="text-gray-500 text-[10px] uppercase font-bold">Kondisi Rusak / Exp</div><div class="text-2xl font-bold text-red-600" id="statBad">0</div></div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-                    <h3 class="text-sm font-bold text-gray-700 mb-3 border-b pb-2"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> Rangkuman Jenis APAR</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div class="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:bg-blue-50 transition"><span class="block text-xs text-gray-500 font-bold uppercase">Powder</span><span class="text-lg font-bold text-gray-800" id="countPowder">0</span></div>
-                        <div class="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:bg-blue-50 transition"><span class="block text-xs text-gray-500 font-bold uppercase">CO2</span><span class="text-lg font-bold text-gray-800" id="countCo2">0</span></div>
-                        <div class="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:bg-blue-50 transition"><span class="block text-xs text-gray-500 font-bold uppercase">Foam</span><span class="text-lg font-bold text-gray-800" id="countFoam">0</span></div>
-                        <div class="bg-gray-50 rounded-lg p-2 border border-gray-100 hover:bg-blue-50 transition"><span class="block text-xs text-gray-500 font-bold uppercase">Clean Agent</span><span class="text-lg font-bold text-gray-800" id="countClean">0</span></div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-orange-200 p-4 mb-6">
-                    <h3 class="text-sm font-bold text-orange-700 mb-3 border-b border-orange-100 pb-2"><i class="fa-solid fa-truck-fast mr-1"></i> Aktivitas Perpindahan Terakhir</h3>
-                    <div id="dashboardMovements" class="space-y-2 max-h-40 overflow-y-auto">
-                        <div class="text-xs text-gray-400 italic">Belum ada data perpindahan.</div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
-                    <div class="flex flex-col md:flex-row gap-3 w-full xl:w-auto">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-gray-500 uppercase">Tahun:</span>
-                            <select id="yearFilter" onchange="app.renderDashboard()" class="border border-gray-300 p-2 rounded bg-gray-50 focus:outline-red-500 text-sm font-bold"></select>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-gray-500 uppercase">Bulan:</span>
-                            <select id="monthFilter" onchange="app.renderDashboard()" class="border border-gray-300 p-2 rounded bg-gray-50 focus:outline-red-500 text-sm w-32"></select>
-                        </div>
-                        <div class="flex items-center gap-2 w-full md:w-auto">
-                            <input type="text" id="searchInput" placeholder="Cari Kode / Lokasi / Belum Dicek..." class="w-full border border-gray-300 p-2 pl-3 rounded bg-white focus:outline-blue-500 text-sm" onkeyup="if(event.key === 'Enter') app.renderDashboard()">
-                            <button onclick="app.renderDashboard()" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 transition text-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 w-full xl:w-auto justify-end flex-wrap items-center">
-                        <button onclick="app.navigate('add-apar')" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 transition text-xs flex items-center font-bold"><i class="fa-solid fa-plus mr-1"></i> Tambah</button>
-                        <button onclick="app.printAllLabels()" class="bg-purple-600 text-white px-3 py-2 rounded shadow hover:bg-purple-700 transition text-xs flex items-center font-bold"><i class="fa-solid fa-qrcode mr-1"></i> Cetak QR</button>
-                        <button onclick="app.exportToExcel()" class="bg-green-600 text-white px-3 py-2 rounded shadow hover:bg-green-700 transition text-xs flex items-center"><i class="fa-solid fa-file-excel mr-1"></i> Excel</button>
-                        <button onclick="app.resetDatabase()" class="bg-red-600 text-white px-3 py-2 rounded shadow hover:bg-red-700 transition text-xs flex items-center border border-red-800" title="Hapus Semua Data"><i class="fa-solid fa-trash-can mr-1"></i> Reset Data</button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-md overflow-hidden min-h-[400px]">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full" id="dataTable">
-                            <thead class="bg-gray-100 text-gray-600 uppercase text-xs leading-normal">
-                                <tr>
-                                    <th class="py-3 px-4 text-left">Kode APAR</th>
-                                    <th class="py-3 px-4 text-left">Lokasi</th>
-                                    <th class="py-3 px-4 text-center">Jenis/Berat</th>
-                                    <th class="py-3 px-4 text-center">Tgl Isi</th>
-                                    <th class="py-3 px-4 text-center">Tgl Exp</th>
-                                    <th class="py-3 px-4 text-center">Status Ceklis</th>
-                                    <th class="py-3 px-4 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="aparTableBody" class="text-gray-600 text-sm font-light"></tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="flex justify-between items-center mt-4 bg-white p-3 rounded-lg shadow-sm">
-                    <span class="text-xs text-gray-500" id="paginationInfo">Menampilkan 0 data</span>
-                    <div class="flex gap-2">
-                        <button onclick="app.changePage(-1)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs font-bold disabled:opacity-50" id="btnPrev">Sebelumnya</button>
-                        <button onclick="app.changePage(1)" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs font-bold disabled:opacity-50" id="btnNext">Selanjutnya</button>
-                    </div>
-                </div>
-
-                <div id="emptyState" class="hidden text-center py-12 text-gray-400"><i class="fa-solid fa-clipboard-list text-5xl mb-3 text-gray-300"></i><p>Belum ada data APAR.</p></div>
-            </div>
-
-            <div id="view-add-apar" class="view-section hidden fade-in">
-                <div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-700 border-b pb-2" id="formTitle">Tambah APAR Baru</h2>
-                    <form onsubmit="app.saveApar(event)">
-                        <input type="hidden" id="editAparId"> <div class="mb-4"><label class="block text-gray-700 text-sm font-bold mb-2">Kode APAR</label><input type="text" id="inputKode" required class="w-full border rounded px-3 py-2" placeholder="Cth: APAR 001"></div>
-                        <div class="mb-4"><label class="block text-gray-700 text-sm font-bold mb-2">Lokasi Penempatan</label><input type="text" id="inputLokasi" required class="w-full border rounded px-3 py-2" placeholder="Cth: IGD Lorong Kanan"></div>
-                        <div class="flex gap-4 mb-4">
-                            <div class="w-1/2"><label class="block text-gray-700 text-sm font-bold mb-2">Jenis</label><select id="inputJenis" class="w-full border rounded px-3 py-2"><option>Powder</option><option>CO2</option><option>Foam</option><option>Clean Agent</option></select></div>
-                            <div class="w-1/2"><label class="block text-gray-700 text-sm font-bold mb-2">Berat (kg)</label><input type="text" inputmode="decimal" id="inputBerat" required class="w-full border rounded px-3 py-2" placeholder="Cth: 3.5"></div>
-                        </div>
-                        <div class="mb-6"><label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pengisian</label><input type="date" id="inputRefill" required class="w-full border rounded px-3 py-2"></div>
-                        <div class="mb-6"><label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Kadaluarsa</label><input type="date" id="inputExpired" required class="w-full border rounded px-3 py-2 bg-red-50 text-red-800 font-bold"></div>
-                        <div class="flex justify-between mt-6">
-                            <button type="button" onclick="app.navigate('dashboard')" class="text-gray-500 hover:text-gray-700 font-bold">Batal</button>
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 font-semibold" id="btnSaveApar">Simpan Data</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div id="view-detail" class="view-section hidden fade-in">
-                <button onclick="app.navigate('dashboard')" class="mb-4 text-red-600 hover:text-red-800 font-semibold no-print flex items-center text-sm"><i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Dashboard</button>
-                <div class="max-w-lg mx-auto">
-                    <div id="captureArea" class="bg-white p-6 rounded-xl shadow-md border-t-4 border-red-500 print-area relative bg-white">
-                        <div id="scanStatusBanner" class="hidden mb-4 p-4 rounded-lg text-center shadow-inner">
-                            <p class="text-xs uppercase font-bold tracking-widest text-gray-500 mb-1">Status Terkini</p>
-                            <div id="scanStatusText" class="text-2xl font-black"></div>
-                            <div id="scanStatusDate" class="text-sm mt-1 font-medium"></div>
-                        </div>
-                        
-                        <div class="relative">
-                            <h3 id="detailKode" class="text-2xl font-bold text-center text-gray-800 mb-1"></h3>
-                            <div class="absolute top-0 right-0 flex flex-col gap-1 no-print">
-                                <button onclick="app.editCurrentApar()" class="text-blue-500 hover:text-blue-700 text-xs font-bold border border-blue-200 p-1 rounded bg-blue-50"><i class="fa-solid fa-pen"></i> Edit</button>
-                                <button onclick="app.openMoveModal()" class="text-orange-500 hover:text-orange-700 text-xs font-bold border border-orange-200 p-1 rounded bg-orange-50"><i class="fa-solid fa-truck-fast"></i> Pindah</button>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-6 flex items-center text-lg"><span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-layer-group"></i></span> Rangkuman Jenis APAR</h3>
+                            <div class="grid grid-cols-4 gap-4 text-center">
+                                <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Powder</div><div class="text-2xl font-black text-gray-800" id="countPowder">0</div></div>
+                                <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">CO2</div><div class="text-2xl font-black text-gray-800" id="countCo2">0</div></div>
+                                <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Foam</div><div class="text-2xl font-black text-gray-800" id="countFoam">0</div></div>
+                                <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Clean Agent</div><div class="text-2xl font-black text-gray-800" id="countClean">0</div></div>
                             </div>
                         </div>
-
-                        <p id="detailLokasi" class="text-center text-gray-500 mb-6 font-medium text-sm"></p>
-                        <div class="space-y-3 text-sm">
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Jenis:</span> <span id="detailJenis" class="font-bold text-gray-800"></span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Berat:</span> <span id="detailBerat" class="font-bold text-gray-800"></span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Tgl Pengisian:</span> <span id="detailRefill" class="font-bold text-gray-800"></span></div>
-                            <div class="flex justify-between border-b pb-2"><span class="text-gray-500">Kadaluarsa:</span> <span id="detailExpired" class="font-bold text-red-600"></span></div>
+                        <div class="bg-white rounded-2xl shadow-sm p-6 border border-orange-100">
+                            <h3 class="font-bold text-orange-800 mb-6 flex items-center text-lg"><span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-truck-fast"></i></span> Perpindahan</h3>
+                            <div id="dashboardMovements" class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                         </div>
-                        <div class="mt-6">
-                            <h4 class="font-bold text-gray-700 mb-3 border-b pb-2 text-sm flex justify-between">
-                                Riwayat Pengecekan
-                                <span class="text-[10px] text-gray-400 font-normal self-center">Terbaru diatas</span>
-                            </h4>
-                            <div id="detailHistoryBody" class="space-y-3"></div>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <h4 class="font-bold text-gray-700 mb-3 border-b pb-2 text-sm flex justify-between">
-                                <span class="flex items-center gap-1"><i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Riwayat Perpindahan</span>
-                            </h4>
-                            <div id="movementHistoryBody" class="space-y-2">
-                                <div class="text-xs text-gray-400 italic text-center">Belum ada riwayat perpindahan.</div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 text-center text-[10px] text-gray-400 hidden show-on-capture">Sistem Monitoring APAR RSJMM Bogor</div>
                     </div>
-                    
-                    <div id="tindakLanjutContainer" class="hidden mt-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-sm no-print">
-                        <p class="font-bold">Perlu Tindak Lanjut!</p>
-                        <p class="text-sm">Status APAR ini Rusak. Segera lakukan perbaikan/penggantian.</p>
-                        <button onclick="app.showTindakLanjutModal()" class="mt-2 bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow hover:bg-yellow-700">Input Tindak Lanjut</button>
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex flex-wrap gap-3 w-full md:w-auto">
+                            <select id="yearFilter" onchange="app.renderDashboard()" class="border border-gray-200 p-2.5 rounded-lg text-sm font-bold bg-gray-50 focus:outline-blue-500 focus:bg-white transition"></select>
+                            <select id="monthFilter" onchange="app.renderDashboard()" class="border border-gray-200 p-2.5 rounded-lg text-sm font-bold bg-gray-50 focus:outline-blue-500 focus:bg-white transition"></select>
+                            <div class="relative flex-1 md:w-72"><i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-gray-400 text-sm"></i><input type="text" id="searchInput" placeholder="Cari Kode / Lokasi..." class="w-full border border-gray-200 p-2.5 pl-10 rounded-lg text-sm bg-gray-50 focus:outline-blue-500 focus:bg-white transition" onkeyup="if(event.key === 'Enter') app.renderDashboard()"></div>
+                            <button onclick="app.renderDashboard()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg shadow hover:bg-blue-700 transition"><i class="fa-solid fa-filter"></i></button>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto justify-end">
+                            <button onclick="app.navigate('add-apar')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow hover:bg-blue-700 transition text-xs font-bold admin-only flex items-center gap-2"><i class="fa-solid fa-plus"></i> Tambah</button>
+                            <button onclick="app.printAllLabels()" class="bg-purple-600 text-white px-5 py-2.5 rounded-lg shadow hover:bg-purple-700 transition text-xs font-bold admin-only flex items-center gap-2"><i class="fa-solid fa-qrcode"></i> QR</button>
+                            <button onclick="app.openExportModal()" class="bg-green-600 text-white px-5 py-2.5 rounded-lg shadow hover:bg-green-700 transition text-xs font-bold admin-only flex items-center gap-2"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                            <button onclick="app.resetDatabase()" class="bg-white text-red-600 px-5 py-2.5 rounded-lg border border-red-200 hover:bg-red-50 transition text-xs font-bold admin-only flex items-center gap-2"><i class="fa-solid fa-trash-can"></i> Reset</button>
+                        </div>
                     </div>
-
-                    <div class="mt-8 no-print space-y-3">
-                        <button onclick="app.shareStatus('print')" class="w-full bg-gray-800 text-white py-3 rounded-lg font-bold shadow hover:bg-gray-900 transition flex justify-center items-center"><i class="fa-solid fa-print mr-2"></i> Cetak Status Terkini</button>
-                        <button id="btnChecklistNow" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow hover:bg-blue-700 transition"><i class="fa-solid fa-clipboard-check mr-2"></i> Input Ceklis Baru</button>
+                    <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                        <div class="overflow-x-auto"><table class="min-w-full" id="dataTable"><thead class="bg-gray-50/80 text-gray-500 uppercase text-[11px] font-extrabold tracking-wider"><tr><th class="py-5 px-6 text-left">Kode APAR</th><th class="py-5 px-6 text-left">Lokasi</th><th class="py-5 px-6 text-center">Jenis APAR</th><th class="py-5 px-6 text-center">Tanggal Isi</th><th class="py-5 px-6 text-center">Expired</th><th class="py-5 px-6 text-center">Status</th><th class="py-5 px-6 text-center admin-only">Aksi</th></tr></thead><tbody id="aparTableBody" class="text-gray-700 text-sm font-medium divide-y divide-gray-100"></tbody></table></div>
+                        <div id="emptyState" class="hidden text-center py-16 text-gray-400"><div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><i class="fa-solid fa-clipboard-list text-3xl text-gray-300"></i></div><p class="font-medium">Data tidak ditemukan.</p></div>
+                        <div class="flex justify-between items-center p-5 bg-gray-50 border-t border-gray-100"><span class="text-xs text-gray-500 font-bold" id="paginationInfo">Loading data...</span><div class="flex gap-2"><button onclick="app.changePage(-1)" class="bg-white border hover:bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50 shadow-sm" id="btnPrev">Prev</button><button onclick="app.changePage(1)" class="bg-white border hover:bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50 shadow-sm" id="btnNext">Next</button></div></div>
                     </div>
                 </div>
-            </div>
 
-            <div id="view-checklist" class="view-section hidden fade-in">
-                <div class="grid md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2 max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-xl border-t-4 border-blue-600 w-full">
-                        <div class="mb-6 text-center"><h2 class="text-2xl font-bold text-gray-800">Form Ceklis Bulanan</h2></div>
-                        <form onsubmit="app.submitChecklist(event)">
-                            <input type="hidden" id="checkAparId">
-                            <div class="mb-6"><label class="block text-gray-700 text-sm font-bold mb-2">Nama Petugas Inspeksi</label><input type="text" id="inputPetugas" required class="w-full border rounded px-3 py-2 bg-gray-50 focus:outline-blue-500 font-semibold" placeholder="Masukkan nama Anda..."></div>
-                            <div class="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200"><label class="block text-gray-700 text-sm font-bold mb-2">Tanggal Pengecekan</label><input type="date" id="inputCheckDate" required class="w-full border border-blue-300 rounded px-3 py-2 focus:outline-blue-500 font-bold text-gray-700"></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div class="space-y-3">
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">1. Nozzle / Corong Baik</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">2. Pin Pengaman Ada</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">3. Segel Utuh</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">4. Selang Baik</span></label>
+                <div id="view-profile" class="view-section hidden fade-in max-w-3xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="h-40 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
+                        <div class="px-10 pb-10">
+                            <div class="relative flex justify-between items-end -mt-16 mb-8">
+                                <div class="w-32 h-32 rounded-full bg-white p-1.5 shadow-xl">
+                                    <img id="profilePageImg" src="" class="w-full h-full rounded-full object-cover" alt="Profile">
                                 </div>
-                                <div class="space-y-3">
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">5. Tekanan Baik</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">6. Body Tabung Baik</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">7. Hanger / Dudukan / Box Apar Baik</span></label>
-                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition"><input type="checkbox" name="checkItem" class="w-5 h-5" onchange="app.updateLiveStatus()" checked><span class="ml-3 font-medium text-gray-700">8. Isi APAR Tidak Beku</span></label>
+                                <div class="mb-4"><span class="bg-green-100 text-green-700 text-xs font-extrabold px-4 py-1.5 rounded-full border border-green-200 flex items-center gap-2 shadow-sm"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> ONLINE</span></div>
+                            </div>
+                            <div class="text-center md:text-left mb-8"><h2 class="text-3xl font-extrabold text-gray-900 mb-1 tracking-tight" id="profilePageName">-</h2><p class="text-blue-600 font-semibold text-sm uppercase tracking-wider" id="profilePageRole">-</p></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="p-6 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition"><div class="flex items-center gap-3 mb-2"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-id-badge"></i></div><span class="text-xs text-gray-400 uppercase font-bold tracking-wider">ID Pengguna</span></div><div class="font-mono font-bold text-gray-800 text-lg pl-11" id="profilePageId">-</div></div><div class="p-6 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition"><div class="flex items-center gap-3 mb-2"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-envelope"></i></div><span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Email</span></div><div class="font-medium text-gray-800 text-lg pl-11" id="profilePageEmail">-</div></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-settings" class="view-section hidden fade-in max-w-5xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-blue-500 h-full">
+                            <h3 class="font-bold text-xl text-gray-800 mb-6 flex items-center"><span class="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center mr-3 text-blue-600"><i class="fa-solid fa-shield-halved"></i></span> Keamanan Akun</h3>
+                            <form onsubmit="app.updateAccount(event)" class="space-y-5">
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Username Baru</label><input type="text" id="setNewUser" class="w-full border-2 border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Kosongkan jika tidak ingin mengubah"></div>
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Password Baru</label><input type="password" id="setNewPass" class="w-full border-2 border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Kosongkan jika tidak ingin mengubah"></div>
+                                <div class="bg-red-50 p-5 rounded-xl border border-red-100 mt-4"><label class="block text-xs font-bold text-red-600 uppercase tracking-wide mb-2">Konfirmasi Password Lama (Wajib)</label><input type="password" id="setOldPass" required class="w-full border-2 border-red-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:border-red-500 transition" placeholder="Masukkan password saat ini untuk verifikasi"></div>
+                                <div class="text-right pt-2"><button type="submit" class="bg-blue-600 text-white text-sm font-bold px-8 py-3 rounded-xl hover:bg-blue-700 transition shadow-lg transform hover:-translate-y-0.5">SIMPAN PERUBAHAN</button></div>
+                            </form>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-gray-300 h-full flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-xl text-gray-800 mb-6 flex items-center"><span class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center mr-3 text-gray-600"><i class="fa-solid fa-circle-info"></i></span> Tentang Aplikasi</h3>
+                                <div class="space-y-4 text-sm">
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><span>Nama Aplikasi</span><span class="font-bold text-gray-800">APAR Monitor</span></div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><span>Versi</span><span class="font-bold bg-blue-600 text-white px-3 py-1 rounded-full text-xs">v1.1.0 Ultimate</span></div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><span>Developer</span><span class="font-bold text-gray-800">K3KL RSJMM</span></div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><span>Update Terakhir</span><span class="font-bold text-gray-800">29 Januari 2026</span></div>
                                 </div>
                             </div>
-                            <div id="liveStatusBox" class="mb-6 p-4 rounded-lg border text-center transition-all duration-300"></div>
-                            <div class="mb-6"><label class="block text-gray-700 text-sm font-bold mb-2">Catatan Tambahan</label><textarea id="inputNotes" class="w-full border rounded-lg px-3 py-2 focus:outline-blue-500 h-24 text-sm"></textarea></div>
-                            <div class="flex justify-end gap-3"><button type="button" onclick="app.backToDetail()" class="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded font-medium">Batal</button><button type="submit" class="bg-blue-600 text-white px-8 py-2.5 rounded shadow hover:bg-blue-700 font-bold tracking-wide">Simpan Hasil</button></div>
+                            <div class="text-center text-xs text-gray-400 mt-6 pt-6 border-t font-medium">Hak Cipta Dilindungi © 2026 K3KL RSJMM</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-add-apar" class="view-section hidden fade-in max-w-2xl mx-auto">
+                    <div class="bg-white p-8 rounded-2xl shadow-lg">
+                        <button onclick="app.navigate('dashboard')" class="mb-6 text-gray-400 hover:text-blue-600 text-sm font-bold flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali</button>
+                        <h2 class="text-2xl font-black text-gray-800 mb-8 border-l-4 border-blue-600 pl-4" id="formTitle">Tambah APAR Baru</h2>
+                        <form onsubmit="app.saveApar(event)" class="space-y-5">
+                            <input type="hidden" id="editAparId"> 
+                            <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Kode APAR</label><input type="text" id="inputKode" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition" placeholder="Cth: APAR 001"></div>
+                            <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Lokasi Penempatan</label><input type="text" id="inputLokasi" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition" placeholder="Cth: IGD Lorong Kanan"></div>
+                            <div class="grid grid-cols-2 gap-5">
+                                <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Jenis</label><select id="inputJenis" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white focus:outline-none focus:border-blue-500"><option>Powder</option><option>CO2</option><option>Foam</option><option>Clean Agent</option></select></div>
+                                <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Berat (kg)</label><input type="text" inputmode="decimal" id="inputBerat" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500" placeholder="Cth: 3.5"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-5">
+                                <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Tanggal Pengisian</label><input type="date" id="inputRefill" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500"></div>
+                                <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Tanggal Kadaluarsa</label><input type="date" id="inputExpired" required class="w-full border-2 border-red-100 rounded-xl px-4 py-3 bg-red-50 text-red-800 font-bold focus:outline-none focus:border-red-500"></div>
+                            </div>
+                            <div class="pt-6 flex justify-end">
+                                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-blue-700 font-bold transition transform hover:-translate-y-0.5" id="btnSaveApar">SIMPAN DATA</button>
+                            </div>
                         </form>
                     </div>
                 </div>
-            </div>
-        </main>
 
-        <footer class="bg-gray-200 text-center py-4 mt-auto border-t border-gray-300 no-print">
-            <p class="text-sm text-gray-600 font-medium">Copyright by <span class="text-red-700 font-bold">@K3KL RSJMM</span> 2025</p>
-        </footer>
+                <div id="view-detail" class="view-section hidden fade-in max-w-xl mx-auto">
+                    <button onclick="app.navigate('dashboard')" class="admin-only mb-6 text-gray-400 hover:text-blue-600 font-bold text-sm flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali Dashboard</button>
+                    
+                    <div id="captureArea" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 print-area relative mb-8">
+                        <div id="scanStatusBanner" class="hidden mb-8 p-6 rounded-xl text-center shadow-inner">
+                            <p class="text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-2">Status Terkini</p>
+                            <div id="scanStatusText" class="text-3xl font-black"></div>
+                            <div id="scanStatusDate" class="text-sm mt-2 font-medium text-gray-600 bg-white/50 inline-block px-3 py-1 rounded-full"></div>
+                        </div>
+                        
+                        <div class="relative text-center mb-8">
+                            <h3 id="detailKode" class="text-4xl font-black text-gray-800 mb-2 tracking-tight"></h3>
+                            <p id="detailLokasi" class="text-gray-500 font-medium text-lg"></p>
+                            
+                            <div class="admin-only absolute top-0 right-0 flex flex-col gap-2 no-print">
+                                <button onclick="app.editCurrentApar()" class="text-blue-600 bg-blue-50 w-10 h-10 rounded-full hover:bg-blue-600 hover:text-white transition shadow-sm flex items-center justify-center"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="app.openMoveModal()" class="text-orange-600 bg-orange-50 w-10 h-10 rounded-full hover:bg-orange-600 hover:text-white transition shadow-sm flex items-center justify-center"><i class="fa-solid fa-truck-fast"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Jenis</span><span id="detailJenis" class="font-bold text-gray-800 text-lg"></span></div>
+                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Berat</span><span id="detailBerat" class="font-bold text-gray-800 text-lg"></span></div>
+                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Tgl Isi</span><span id="detailRefill" class="font-bold text-gray-800"></span></div>
+                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Kadaluarsa</span><span id="detailExpired" class="font-bold text-red-600"></span></div>
+                        </div>
+
+                        <div class="mt-8">
+                            <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 text-sm flex justify-between items-center">Riwayat Pengecekan <span class="bg-gray-200 text-gray-600 px-2 py-0.5 rounded text-[10px]">5 Terakhir</span></h4>
+                            <div id="detailHistoryBody" class="space-y-3"></div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 text-sm flex justify-between items-center">Riwayat Perpindahan</h4>
+                            <div id="movementHistoryBody" class="space-y-2"><div class="text-xs text-gray-400 italic text-center py-4">Belum ada riwayat.</div></div>
+                        </div>
+                        <div class="mt-8 text-center text-[10px] text-gray-300 show-on-capture block pt-4 border-t border-dashed">Sistem Monitoring APAR RSJMM Bogor - Generated by System</div>
+                    </div>
+                    
+                    <div id="tindakLanjutContainer" class="hidden admin-only mt-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-900 p-5 rounded-xl shadow-sm no-print mb-6 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-yellow-100 text-6xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="relative z-10">
+                            <p class="font-black text-lg mb-1">PERLU TINDAK LANJUT!</p>
+                            <p class="text-sm mb-3 font-medium">Unit ini dilaporkan RUSAK/EXPIRED.</p>
+                            <button onclick="app.showTindakLanjutModal()" class="bg-yellow-600 text-white px-5 py-2 rounded-lg text-xs font-bold shadow hover:bg-yellow-700 transition">INPUT PERBAIKAN</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 no-print">
+                        <button onclick="app.shareStatus('print')" class="admin-only w-full bg-gray-800 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-gray-900 transition flex justify-center items-center gap-2 transform hover:-translate-y-0.5"><i class="fa-solid fa-print"></i> CETAK STATUS</button>
+                        <button id="btnChecklistNow" class="admin-only w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex justify-center items-center gap-2 transform hover:-translate-y-0.5"><i class="fa-solid fa-clipboard-check"></i> ISI CEKLIS</button>
+                    </div>
+                </div>
+
+                <div id="view-checklist" class="view-section hidden fade-in max-w-2xl mx-auto">
+                    <button onclick="app.backToDetail()" class="mb-6 text-gray-400 hover:text-blue-600 font-bold text-sm flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></div> Batalkan</button>
+                    <div class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600">
+                        <h2 class="text-2xl font-black text-gray-800 mb-8 text-center uppercase tracking-tight hidden md:block">Form Ceklis Bulanan</h2>
+                        <form onsubmit="app.submitChecklist(event)">
+                            <input type="hidden" id="checkAparId">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div><label class="block text-gray-500 text-xs font-bold uppercase mb-2">Petugas</label><input type="text" id="inputPetugas" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-3 bg-gray-50 font-bold text-gray-700" readonly></div>
+                                <div><label class="block text-gray-500 text-xs font-bold uppercase mb-2">Tanggal Cek</label><input type="date" id="inputCheckDate" required class="w-full border-2 border-blue-100 rounded-xl px-4 py-3 font-bold text-blue-800 focus:outline-none focus:border-blue-500 transition"></div>
+                            </div>
+                            
+                            <div class="bg-blue-50/50 p-6 rounded-2xl mb-8 border border-blue-100">
+                                <p class="text-xs font-black text-blue-500 uppercase mb-4 tracking-wider"><i class="fa-solid fa-list-check mr-1"></i> Item Pemeriksaan Fisik</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">1. Nozzle / Corong</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">2. Pin Pengaman</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">3. Segel Utuh</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">4. Selang (Hose)</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">5. Tekanan Bagus</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">6. Body Tabung</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">7. Hanger / Dudukan</span></label>
+                                    <label class="flex items-center p-3 bg-white rounded-xl cursor-pointer border-2 border-transparent hover:border-blue-200 transition shadow-sm"><input type="checkbox" name="checkItem" class="w-5 h-5 accent-blue-600" onchange="app.updateLiveStatus()" checked><span class="ml-3 text-sm font-semibold text-gray-700">8. Isi Tidak Beku</span></label>
+                                </div>
+                            </div>
+
+                            <div id="liveStatusBox" class="mb-8 p-6 rounded-2xl border-2 text-center transition-all duration-300 transform scale-100"></div>
+                            
+                            <div id="evidenceContainer" class="hidden mb-8 bg-red-50 p-6 rounded-2xl border-2 border-dashed border-red-300 text-center">
+                                <div class="mb-3 text-red-400 text-3xl"><i class="fa-solid fa-camera"></i></div>
+                                <label class="block text-red-800 text-sm font-bold mb-2 uppercase tracking-wide">Wajib Foto Bukti Kerusakan</label>
+                                <input type="file" id="evidencePhoto" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-white file:text-red-600 hover:file:bg-red-100 cursor-pointer">
+                            </div>
+
+                            <div class="mb-8"><label class="block text-gray-500 text-xs font-bold uppercase mb-2">Catatan Tambahan</label><textarea id="inputNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 h-28 text-sm resize-none transition" placeholder="Tulis keterangan jika ada kerusakan..."></textarea></div>
+                            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-xl font-bold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-600 tracking-wide transition transform hover:-translate-y-1">SIMPAN HASIL INSPEKSI</button>
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
     </div>
 
-    <div id="editHistoryModal" class="modal hidden">
-        <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
-            <h3 class="font-bold text-lg mb-4">Edit Catatan Riwayat</h3>
-            <input type="hidden" id="editHistoryIndex">
-            <div class="mb-3">
-                <label class="block text-xs font-bold mb-1">Status</label>
-                <select id="editHistoryStatus" class="w-full border p-2 rounded"><option value="true">BAIK</option><option value="false">RUSAK</option></select>
+    <div id="exportModal" class="modal hidden">
+        <div class="bg-white p-6 rounded-xl w-96 shadow-2xl border-t-8 border-green-600">
+            <h3 class="font-bold text-xl mb-6 text-gray-800 flex items-center gap-2"><i class="fa-solid fa-file-excel text-green-600"></i> Export Laporan Bulanan</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Bulan</label>
+                    <select id="exportMonth" class="w-full border-2 border-gray-200 rounded-lg p-3 font-bold text-gray-700 focus:border-green-500 focus:outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pilih Tahun</label>
+                    <select id="exportYear" class="w-full border-2 border-gray-200 rounded-lg p-3 font-bold text-gray-700 focus:border-green-500 focus:outline-none"></select>
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-xs font-bold mb-1">Catatan</label>
-                <textarea id="editHistoryNote" class="w-full border p-2 rounded h-20"></textarea>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('editHistoryModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button>
-                <button onclick="app.saveEditedHistory()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Update</button>
+            <div class="flex justify-end gap-3 mt-8">
+                <button onclick="document.getElementById('exportModal').classList.add('hidden')" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-bold text-gray-600 transition">Batal</button>
+                <button onclick="app.processExport()" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow-lg transition flex items-center gap-2"><i class="fa-solid fa-download"></i> Download Excel</button>
             </div>
         </div>
     </div>
 
-    <div id="moveAparModal" class="modal hidden">
-        <div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-orange-500">
-            <h3 class="font-bold text-lg mb-4 text-orange-600"><i class="fa-solid fa-truck-fast"></i> Pindahkan APAR</h3>
-            <div class="mb-3">
-                <label class="block text-xs font-bold mb-1 text-gray-500">Lokasi Sekarang:</label>
-                <div id="moveCurrentLoc" class="font-bold text-sm bg-gray-100 p-2 rounded text-gray-700"></div>
+    <div id="logoutModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-pink-600"></div>
+            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 animate-pulse">
+                <i class="fa-solid fa-power-off text-3xl"></i>
             </div>
-            <div class="mb-4">
-                <label class="block text-xs font-bold mb-1">Pindah ke Ruangan Baru:</label>
-                <input type="text" id="moveNewLoc" class="w-full border p-2 rounded font-bold" placeholder="Nama Ruangan Baru...">
-            </div>
-            <div class="mb-4">
-                <label class="block text-xs font-bold mb-1">Petugas:</label>
-                <input type="text" id="movePetugas" class="w-full border p-2 rounded" placeholder="Nama Anda">
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('moveAparModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button>
-                <button onclick="app.submitMove()" class="px-3 py-1 bg-orange-600 text-white rounded text-sm font-bold shadow">Simpan & Pindahkan</button>
+            <h3 class="text-xl font-black text-gray-800 mb-2">Konfirmasi Logout</h3>
+            <p class="text-sm text-gray-500 mb-8 font-medium">Apakah anda yakin ingin mengakhiri sesi ini?</p>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('logoutModal').classList.add('hidden')" class="flex-1 py-3 rounded-xl border-2 border-gray-100 font-bold text-gray-500 hover:bg-gray-50 transition">Batal</button>
+                <button onclick="app.finalizeLogout()" class="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold shadow-lg hover:bg-red-700 hover:shadow-xl transition transform hover:-translate-y-0.5">Ya, Keluar</button>
             </div>
         </div>
     </div>
 
-    <div id="tindakLanjutModal" class="modal hidden">
-        <div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-yellow-500">
-            <h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3>
-            <div class="mb-4">
-                <label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label>
-                <textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke workshop untuk isi ulang/perbaikan seal..."></textarea>
-            </div>
-            <div class="mb-4">
-                <label class="block text-xs font-bold mb-1">Oleh:</label>
-                <input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Teknisi">
-            </div>
-            <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button>
-                <button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="labelPrintArea" class="hidden bg-white p-4 border border-gray-800 w-[300px] text-center mx-auto">
-        <h2 class="text-lg font-bold uppercase mb-1 border-b border-black pb-1">KARTU INSPEKSI APAR</h2>
-        <h3 class="text-xs mb-2">RSJMM BOGOR</h3>
-        <div id="printQrContainer" class="flex justify-center my-2"></div>
-        <div class="text-xl font-black my-1" id="printLabelKode"></div>
-        <div class="text-sm italic" id="printLabelLokasi"></div>
-        <div class="text-[10px] mt-2 border-t pt-1">Scan untuk update status & cek riwayat</div>
-    </div>
-    <div id="printAllArea" class="hidden"></div>
+    <div id="editHistoryModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl"><h3 class="font-bold text-lg mb-4">Edit Catatan Riwayat</h3><input type="hidden" id="editHistoryIndex"><div class="mb-3"><label class="block text-xs font-bold mb-1">Status</label><select id="editHistoryStatus" class="w-full border p-2 rounded"><option value="true">BAIK</option><option value="false">RUSAK</option></select></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Catatan</label><textarea id="editHistoryNote" class="w-full border p-2 rounded h-20"></textarea></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('editHistoryModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.saveEditedHistory()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Update</button></div></div></div>
+    <div id="moveAparModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-orange-500"><h3 class="font-bold text-lg mb-4 text-orange-600"><i class="fa-solid fa-truck-fast"></i> Pindahkan APAR</h3><div class="mb-3"><label class="block text-xs font-bold mb-1 text-gray-500">Lokasi Sekarang:</label><div id="moveCurrentLoc" class="font-bold text-sm bg-gray-100 p-2 rounded text-gray-700"></div></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Pindah ke Ruangan Baru:</label><input type="text" id="moveNewLoc" class="w-full border p-2 rounded font-bold" placeholder="Nama Ruangan Baru..."></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Petugas:</label><input type="text" id="movePetugas" class="w-full border p-2 rounded" placeholder="Nama Anda"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('moveAparModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitMove()" class="px-3 py-1 bg-orange-600 text-white rounded text-sm font-bold shadow">Simpan & Pindahkan</button></div></div></div>
+    <div id="tindakLanjutModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-yellow-500"><h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3><div class="mb-4"><label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label><textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke workshop untuk isi ulang/perbaikan seal..."></textarea></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Oleh:</label><input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Teknisi"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button></div></div></div>
+    <div id="labelPrintArea" class="hidden bg-white p-4 border border-gray-800 w-[300px] text-center mx-auto"><h2 class="text-lg font-bold uppercase mb-1 border-b border-black pb-1">KARTU INSPEKSI APAR</h2><h3 class="text-xs mb-2">RSJMM BOGOR</h3><div id="printQrContainer" class="flex justify-center my-2"></div><div class="text-xl font-black my-1" id="printLabelKode"></div><div class="text-sm italic" id="printLabelLokasi"></div><div class="text-[10px] mt-2 border-t pt-1">Scan untuk update status & cek riwayat</div></div><div id="printAllArea" class="hidden"></div>
 
     <script>
         // ⚠️ PASTE URL GOOGLE APPS SCRIPT ANDA DI SINI:
         const API_URL = "https://script.google.com/macros/s/AKfycbzt9AnnNAAQtpDFWXjHlSXv9mDllQfH3CZxvANgU-gEPAs_NTAy7pRPC-GdH58srGRK/exec"; 
         
         const app = {
-            data: {
-                apars: [], checks: [], movements: [], 
-                dismissed: JSON.parse(localStorage.getItem('dismissed')) || [],
-                months: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"],
-                fullMonths: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
-                currentPage: 1, itemsPerPage: 10,
-                currentDetailId: null, historyToEdit: null
+            data: { apars: [], checks: [], movements: [], dismissed: JSON.parse(localStorage.getItem('dismissed')) || [], months: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"], fullMonths: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"], currentPage: 1, itemsPerPage: 10, currentDetailId: null, historyToEdit: null, pendingScanAction: null, pendingScanId: null },
+            
+            formatPhotoUrl: function(url) { if (!url) return ''; const driveRegex = /\/d\/([a-zA-Z0-9_-]+)/; const match = url.match(driveRegex); if (match && match[1]) { return `https://drive.google.com/uc?export=view&id=${match[1]}`; } return url; },
+
+            toggleSidebar: function() {
+                const s = document.getElementById('sidebar');
+                const m = document.getElementById('main-content');
+                const hBtn = document.getElementById('headerToggleBtn');
+                const isClosed = s.classList.contains('hidden');
+                if (isClosed) {
+                    s.classList.remove('hidden'); s.classList.add('flex'); s.classList.add('md:flex');
+                    m.classList.add('md:ml-64'); hBtn.classList.add('hidden');
+                } else {
+                    s.classList.add('hidden'); s.classList.remove('flex'); s.classList.remove('md:flex');
+                    m.classList.remove('md:ml-64'); hBtn.classList.remove('hidden');
+                }
+            },
+
+            handleLogin: async function(e) { 
+                e.preventDefault(); const u = document.getElementById('loginUser').value; const p = document.getElementById('loginPass').value; this.toggleLoading(true, "Memeriksa Database...");
+                try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', username: u, password: p }) }); const j = await r.json();
+                    if (j.status === 'success') { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userRole', j.role); localStorage.setItem('petugasName', j.petugasName); localStorage.setItem('petugasId', u); 
+                        if(j.photoUrl) localStorage.setItem('petugasPhoto', this.formatPhotoUrl(j.photoUrl)); else localStorage.removeItem('petugasPhoto'); 
+                        if(j.petugasName) document.getElementById('inputPetugas').value = j.petugasName; document.getElementById('login-screen').classList.add('hidden');
+                        if (this.data.pendingScanAction === 'inspect' && this.data.pendingScanId) { if (this.data.apars.length === 0) { await this.fetchDataWithTimeout(); } this.data.pendingScanAction = null; document.getElementById('main-app').classList.remove('hidden'); this.showChecklistForm(this.data.pendingScanId); } else { this.init(); }
+                    } else { alert(j.message || 'Login Gagal!'); }
+                } catch (err) { console.error(err); alert('Login sukses.'); } finally { this.toggleLoading(false); }
+            },
+            cancelLogin: function() { document.getElementById('login-screen').classList.add('hidden'); const scanId = new URLSearchParams(window.location.search).get('id'); if (scanId) { document.getElementById('scan-choice-screen').classList.remove('hidden'); } else { document.getElementById('login-screen').classList.remove('hidden'); } },
+            
+            // REVISI: Logika Logout dengan Modal Baru
+            handleLogout: function() { 
+                document.getElementById('logoutModal').classList.remove('hidden');
+            },
+            finalizeLogout: function() {
+                localStorage.removeItem('isLoggedIn'); 
+                localStorage.removeItem('userRole'); 
+                localStorage.removeItem('petugasName'); 
+                localStorage.removeItem('petugasId'); 
+                localStorage.removeItem('petugasPhoto'); 
+                location.reload();
             },
             
-            // --- AUTH & INIT ---
-            handleLogin: function(e) { e.preventDefault(); const u = document.getElementById('loginUser').value; const p = document.getElementById('loginPass').value; if (u === 'admin' && p === 'admin123') { localStorage.setItem('isLoggedIn', 'true'); this.init(); } else { alert('Username atau Password Salah!'); } },
-            handleLogout: function() { if(confirm("Yakin ingin keluar?")) { localStorage.removeItem('isLoggedIn'); location.reload(); } },
             init: async function() {
+                const urlParams = new URLSearchParams(window.location.search); const scanId = urlParams.get('id');
+                const localApars = localStorage.getItem('cached_apars'); const localChecks = localStorage.getItem('cached_checks');
+                if (localApars) { try { this.data.apars = JSON.parse(localApars); this.data.checks = JSON.parse(localChecks || "[]"); } catch(e) {} }
+                if (scanId) { document.getElementById('scan-choice-screen').classList.remove('hidden'); this.fetchDataWithTimeout(); return; }
                 if (!localStorage.getItem('isLoggedIn')) { document.getElementById('login-screen').classList.remove('hidden'); return; }
                 document.getElementById('login-screen').classList.add('hidden'); document.getElementById('main-app').classList.remove('hidden');
                 
-                // FITUR BARU: JAM REALTIME
-                setInterval(() => {
-                    const now = new Date();
-                    document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('id-ID') + ' WIB';
-                }, 1000);
-
-                this.setupFilters();
-                const localApars = localStorage.getItem('cached_apars'); const localChecks = localStorage.getItem('cached_checks');
-                if (localApars) { try { this.data.apars = JSON.parse(localApars); this.data.checks = JSON.parse(localChecks || "[]"); this.renderDashboard(); } catch(e) {} }
-                this.fetchDataWithTimeout();
-                const urlParams = new URLSearchParams(window.location.search); const scanId = urlParams.get('id'); if (scanId) { this.showDetail(scanId); } 
-            },
-
-            // --- DATA SYNC ---
-            fetchDataWithTimeout: async function() {
-                try { 
-                    const res = await fetch(API_URL + "?action=getData"); 
-                    const json = await res.json(); 
-                    this.data.apars = json.apars || []; 
-                    this.data.checks = json.checks || []; 
-                    this.data.movements = json.movements || []; 
-                    localStorage.setItem('cached_apars', JSON.stringify(this.data.apars)); 
-                    localStorage.setItem('cached_checks', JSON.stringify(this.data.checks)); 
-                    this.renderDashboard(); 
-                    document.getElementById('statusOnlineBadge').innerText = "ONLINE"; 
-                    document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top";
-                    this.toggleLoading(false);
-                    this.checkNotifications();
-                } catch (err) { 
-                    console.error("Fetch Error:", err); 
-                    document.getElementById('statusOnlineBadge').innerText = "OFFLINE"; 
-                    document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-gray-500 text-white px-1 py-0.5 rounded align-top";
-                }
-            },
-            sendData: async function(payload) {
-                this.toggleLoading(true, "Menyimpan...");
-                try {
-                    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                    const json = await res.json();
-                    if(json.status === 'success') {
-                        await this.fetchDataWithTimeout();
-                        this.toggleLoading(false);
-                        this.showToast("Berhasil Disimpan!", "green");
-                        return true;
-                    } else { throw new Error(json.message); }
-                } catch (err) {
-                    this.toggleLoading(false);
-                    this.showToast("Gagal tersambung server (Cek Internet)", "red");
-                    return false;
-                }
-            },
-            
-            // --- RESET DATA FEATURE ---
-            resetDatabase: async function() {
-                const pass = prompt("PERINGATAN! Anda akan menghapus SELURUH data APAR dan Riwayat.\n\nMasukkan Password untuk melanjutkan:");
-                if (pass === "admin123") { 
-                    if(confirm("Apakah Anda YAKIN? Data yang dihapus tidak dapat dikembalikan.")) {
-                        const success = await this.sendData({ action: "resetDatabase" });
-                        if(success) {
-                            localStorage.removeItem('cached_apars');
-                            localStorage.removeItem('cached_checks');
-                            localStorage.removeItem('dismissed');
-                            alert("Database berhasil di-reset.");
-                            location.reload();
-                        }
-                    }
-                } else if (pass !== null) {
-                    alert("Password Salah!");
-                }
-            },
-
-            // --- DASHBOARD LOGIC ---
-            changePage: function(delta) {
-                this.data.currentPage += delta;
-                this.renderDashboard();
-            },
-            renderDashboard: function() {
-                const tbody = document.getElementById('aparTableBody'); const empty = document.getElementById('emptyState'); tbody.innerHTML = '';
-                const sYear = document.getElementById('yearFilter').value; const sMonth = document.getElementById('monthFilter').value; const search = document.getElementById('searchInput').value.toLowerCase();
+                const userName = localStorage.getItem('petugasName') || 'User'; document.getElementById('headerUserName').innerText = userName;
+                const photoUrl = localStorage.getItem('petugasPhoto'); const defaultUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=ffffff&color=2563eb`;
+                const finalUrl = (photoUrl && photoUrl.trim() !== "") ? photoUrl : defaultUrl; document.getElementById('headerProfileImg').src = finalUrl; document.getElementById('profilePageImg').src = finalUrl;
                 
+                const now = new Date(); const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']; const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                document.getElementById('headerDate').innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+                setInterval(() => { document.getElementById('clockDisplay').innerHTML = `<i class="fa-regular fa-clock mr-1"></i> ` + new Date().toLocaleTimeString('id-ID'); }, 1000);
+                
+                this.updateSyncButton(); window.addEventListener('online', () => this.updateSyncButton()); window.addEventListener('offline', () => this.updateSyncButton());
+                const savedPetugas = localStorage.getItem('petugasName'); if(savedPetugas) document.getElementById('inputPetugas').value = savedPetugas;
+                this.setupFilters(); this.renderDashboard(); this.fetchDataWithTimeout();
+            },
+
+            handleScanOption: function(choice) {
+                const scanId = new URLSearchParams(window.location.search).get('id'); document.getElementById('scan-choice-screen').classList.add('hidden'); document.body.classList.add('scan-mode');
+                if (choice === 'inspect') { if (localStorage.getItem('isLoggedIn')) { document.getElementById('main-app').classList.remove('hidden'); this.showChecklistForm(scanId); } else { this.data.pendingScanAction = 'inspect'; this.data.pendingScanId = scanId; document.getElementById('login-screen').classList.remove('hidden'); } } 
+                else if (choice === 'history') { document.body.classList.add('public-mode'); document.getElementById('main-app').classList.remove('hidden'); if(this.data.apars.length > 0) { this.showDetail(scanId); } else { this.toggleLoading(true, "Memuat Data..."); this.fetchDataWithTimeout().then(() => { this.toggleLoading(false); this.showDetail(scanId); }); } }
+            },
+
+            fetchDataWithTimeout: async function() {
+                try { const r = await fetch(API_URL + "?action=getData"); const j = await r.json(); this.data.apars = j.apars || []; this.data.checks = j.checks || []; this.data.movements = j.movements || []; localStorage.setItem('cached_apars', JSON.stringify(this.data.apars)); localStorage.setItem('cached_checks', JSON.stringify(this.data.checks)); this.renderDashboard(); document.getElementById('statusOnlineBadge').innerText = "ONLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top"; this.checkNotifications(); } catch (err) { console.error("Fetch Error:", err); document.getElementById('statusOnlineBadge').innerText = "OFFLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-gray-500 text-white px-1 py-0.5 rounded align-top"; }
+            },
+            sendData: async function(p) {
+                if (!navigator.onLine) { this.saveToOfflineQueue(p); this.showToast("Tidak ada sinyal. Disimpan Offline.", "orange"); this.updateSyncButton(); return true; }
+                this.toggleLoading(true, "Menyimpan..."); try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(p) }); const j = await r.json(); if(j.status === 'success') { await this.fetchDataWithTimeout(); this.toggleLoading(false); this.showToast("Berhasil Disimpan!", "green"); return true; } else { throw new Error(j.message); } } catch (err) { this.toggleLoading(false); this.saveToOfflineQueue(p); this.showToast("Gagal kirim. Masuk antrean.", "orange"); this.updateSyncButton(); return true; }
+            },
+            saveToOfflineQueue: function(p) { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); q.push(p); localStorage.setItem('offlineQueue', JSON.stringify(q)); },
+            updateSyncButton: function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); const b = document.getElementById('btnSync'); const c = document.getElementById('syncCount'); if (q.length > 0 && navigator.onLine) { b.classList.remove('hidden'); c.innerText = q.length; } else { b.classList.add('hidden'); } },
+            syncOfflineData: async function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); if (q.length === 0) return; if(!confirm(`Ada ${q.length} data offline. Kirim?`)) return; this.toggleLoading(true, "Sync..."); let sc = 0; const nq = []; for (let i = 0; i < q.length; i++) { try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(q[i]) }); const j = await r.json(); if(j.status === 'success') { sc++; } else { nq.push(q[i]); } } catch (e) { nq.push(q[i]); } } localStorage.setItem('offlineQueue', JSON.stringify(nq)); await this.fetchDataWithTimeout(); this.updateSyncButton(); this.toggleLoading(false); alert(`${sc} Terkirim. Sisa: ${nq.length}`); },
+            resetDatabase: async function() { if(localStorage.getItem('userRole') !== 'Admin') { alert('Hanya ADMIN!'); return; } const p = prompt("Password ADMIN:"); if (p === "admin123") { if(confirm("YAKIN HAPUS SEMUA?")) { const s = await this.sendData({ action: "resetDatabase" }); if(s) { localStorage.removeItem('cached_apars'); localStorage.removeItem('cached_checks'); localStorage.removeItem('dismissed'); alert("Reset Berhasil."); location.reload(); } } } else if (p!==null) { alert("Password Salah!"); } },
+
+            changePage: function(d) { this.data.currentPage += d; this.renderDashboard(); },
+            renderDashboard: function() {
+                const tb = document.getElementById('aparTableBody'); const em = document.getElementById('emptyState'); tb.innerHTML = '';
+                const yEl = document.getElementById('yearFilter'); const mEl = document.getElementById('monthFilter');
+                const sYear = yEl && yEl.value ? yEl.value : new Date().getFullYear(); const sMonth = mEl ? mEl.value : ""; 
+                const search = document.getElementById('searchInput').value.toLowerCase();
+                
+                if (!this.data.apars || this.data.apars.length === 0) { em.classList.remove('hidden'); document.getElementById('paginationInfo').innerText = ""; return; } else { em.classList.add('hidden'); }
+
                 let fApars = this.data.apars.filter(a => {
                     let lastCheck;
-                    if(sMonth !== "") lastCheck = this.data.checks.find(c => c.aparId == a.id && c.year == sYear && c.month == sMonth);
-                    else lastCheck = this.getLastCheck(a.id);
-
-                    let statusText = "belum dicek"; 
-                    if (lastCheck) {
-                        statusText = String(lastCheck.isGood)==='true' ? "baik" : "rusak";
-                    }
-
-                    const d1 = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : "";
-                    const d2 = new Date(a.expiredDate).toLocaleDateString('id-ID');
-                    
-                    const combined = `${a.kode} ${a.lokasi} ${a.jenis} ${a.berat} ${d1} ${d2} ${statusText}`.toLowerCase();
-                    return combined.includes(search);
+                    if(sMonth !== "") { lastCheck = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); } 
+                    else { lastCheck = this.getLastCheck(a.id); }
+                    const isExpired = new Date(a.expiredDate) < new Date();
+                    let st = "belum dicek"; 
+                    if (lastCheck) { st = String(lastCheck.isGood)==='true' ? "baik" : "rusak"; }
+                    const d1 = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : ""; const d2 = new Date(a.expiredDate).toLocaleDateString('id-ID');
+                    const comb = `${a.kode} ${a.lokasi} ${a.jenis} ${a.berat} ${d1} ${d2} ${st}`.toLowerCase();
+                    return comb.includes(search);
                 });
                 
-                let sTotal=fApars.length, sChecked=0, sGood=0, sBad=0;
-                let cPow=0, cCo2=0, cFoam=0, cClean=0;
-
-                fApars.forEach(apar => {
-                    const j = (apar.jenis || '').toLowerCase();
-                    if(j.includes('powder')) cPow++; else if(j.includes('co2')) cCo2++; else if(j.includes('foam')) cFoam++; else cClean++;
-
-                    const currentMonthCheck = this.data.checks.find(c => c.aparId == apar.id && c.year == new Date().getFullYear() && c.month == new Date().getMonth());
-                    if(currentMonthCheck) { sChecked++; }
-                    
-                    const lastCheck = this.getLastCheck(apar.id);
-                    if(lastCheck) { String(lastCheck.isGood)==='true' ? sGood++ : sBad++; }
-                    if(new Date(apar.expiredDate) < new Date()) sBad++; 
+                let sTotal=fApars.length, sChecked=0, sGood=0, sBad=0, cPow=0, cCo2=0, cFoam=0, cClean=0;
+                fApars.forEach(a => {
+                    const j = (a.jenis || '').toLowerCase(); if(j.includes('powder')) cPow++; else if(j.includes('co2')) cCo2++; else if(j.includes('foam')) cFoam++; else cClean++;
+                    let tC;
+                    if(sMonth !== "") { tC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); if(tC) sChecked++; } 
+                    else { const curC = this.data.checks.find(c => String(c.aparId) === String(a.id) && c.year == new Date().getFullYear() && c.month == new Date().getMonth()); if(curC) sChecked++; tC = this.getLastCheck(a.id); }
+                    if(tC) { String(tC.isGood)==='true' ? sGood++ : sBad++; }
                 });
 
-                document.getElementById('statTotal').innerText = sTotal; 
-                document.getElementById('statChecked').innerText = sChecked; 
-                document.getElementById('statGood').innerText = sGood; 
-                document.getElementById('statBad').innerText = sBad;
-                
-                document.getElementById('countPowder').innerText = cPow; 
-                document.getElementById('countCo2').innerText = cCo2; 
-                document.getElementById('countFoam').innerText = cFoam; 
-                document.getElementById('countClean').innerText = cClean;
-
-                // FITUR BARU: Render Riwayat Pindah di Dashboard
+                document.getElementById('statTotal').innerText = sTotal; document.getElementById('statChecked').innerText = sChecked; document.getElementById('statGood').innerText = sGood; document.getElementById('statBad').innerText = sBad;
+                document.getElementById('countPowder').innerText = cPow; document.getElementById('countCo2').innerText = cCo2; document.getElementById('countFoam').innerText = cFoam; document.getElementById('countClean').innerText = cClean;
                 this.renderDashboardMovements();
 
-                if(fApars.length === 0) { empty.classList.remove('hidden'); document.getElementById('paginationInfo').innerText = ""; return; } else { empty.classList.add('hidden'); }
+                const tP = Math.ceil(fApars.length / this.data.itemsPerPage);
+                if (this.data.currentPage < 1) this.data.currentPage = 1; if (this.data.currentPage > tP) this.data.currentPage = tP || 1;
                 
-                const totalPages = Math.ceil(fApars.length / this.data.itemsPerPage);
-                if (this.data.currentPage < 1) this.data.currentPage = 1;
-                if (this.data.currentPage > totalPages) this.data.currentPage = totalPages;
-                
-                const start = (this.data.currentPage - 1) * this.data.itemsPerPage;
-                const end = start + this.data.itemsPerPage;
-                const paginatedItems = fApars.slice(start, end);
-
+                const start = (this.data.currentPage - 1) * this.data.itemsPerPage; const end = start + this.data.itemsPerPage; const pItems = fApars.slice(start, end);
                 document.getElementById('paginationInfo').innerText = `Menampilkan ${start + 1} - ${Math.min(end, fApars.length)} dari ${fApars.length} data`;
-                document.getElementById('btnPrev').disabled = this.data.currentPage === 1;
-                document.getElementById('btnNext').disabled = this.data.currentPage === totalPages;
+                document.getElementById('btnPrev').disabled = this.data.currentPage === 1; document.getElementById('btnNext').disabled = this.data.currentPage === tP;
 
-                paginatedItems.forEach(apar => {
-                    let lastCheck;
-                    if (sMonth !== "") lastCheck = this.data.checks.find(c => c.aparId == apar.id && c.year == sYear && c.month == sMonth);
-                    else lastCheck = this.getLastCheck(apar.id);
-
-                    let badge = '<span class="bg-gray-100 text-gray-400 py-1 px-2 rounded text-xs">Belum Dicek</span>';
-                    if (lastCheck) { 
-                        const isG = String(lastCheck.isGood).toLowerCase() === 'true'; 
-                        const monthName = this.data.months[lastCheck.month];
-                        badge = isG ? `<span class="bg-green-100 text-green-700 py-1 px-2 rounded text-xs font-bold border border-green-200">BAIK (${monthName})</span>` : `<span class="bg-red-100 text-red-700 py-1 px-2 rounded text-xs font-bold border border-red-200">RUSAK (${monthName})</span>`; 
+                pItems.forEach(a => {
+                    let lC;
+                    if (sMonth !== "") lC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); else lC = this.getLastCheck(a.id);
+                    const isExp = new Date(a.expiredDate) < new Date(); 
+                    let bg = '<span class="bg-gray-100 text-gray-400 py-1 px-2 rounded-full text-[10px] font-bold">BELUM</span>';
+                    
+                    if (isExp) { bg = `<span class="bg-red-100 text-red-700 py-1 px-2 rounded-full text-[10px] font-bold border border-red-200">EXPIRED</span>`; } 
+                    
+                    if (lC) { 
+                        const isG = String(lC.isGood).toLowerCase() === 'true'; const mN = this.data.months[lC.month];
+                        if (isG) { bg = `<span class="bg-green-100 text-green-700 py-1 px-2 rounded-full text-[10px] font-bold border border-green-200">BAIK (${mN})</span>`; } 
+                        else { if (lC.notes && lC.notes.includes('HARUS DIISI ULANG')) { bg = `<span class="bg-purple-100 text-purple-700 py-1 px-2 rounded-full text-[10px] font-bold border border-purple-200">APAR HARUS DIISI ULANG (${mN})</span>`; } else { bg = `<span class="bg-red-100 text-red-700 py-1 px-2 rounded-full text-[10px] font-bold border border-red-200">RUSAK (${mN})</span>`; } }
                     }
+                    const eD = `<span class="${isExp?'text-red-600 font-bold bg-red-50 px-1 rounded':''}">${new Date(a.expiredDate).toLocaleDateString('id-ID')}</span>`;
+                    const rD = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : "-";
+                    let b = parseFloat(String(a.berat).replace(',', '.')); if(isNaN(b)) b=0; 
                     
-                    const isExp = new Date(apar.expiredDate) < new Date(); 
-                    const expD = `<span class="${isExp?'text-red-600 font-bold bg-red-50 px-1 rounded':''}">${new Date(apar.expiredDate).toLocaleDateString('id-ID')}</span>`;
-                    const refillD = apar.refillDate ? new Date(apar.refillDate).toLocaleDateString('id-ID') : "-";
-                    
-                    let bStr = String(apar.berat).replace(',', '.');
-                    let bVal = parseFloat(bStr);
-                    if(isNaN(bVal) || bVal > 200) bVal = 0; 
-                    const displayBerat = bVal + ' kg';
-
-                    tbody.innerHTML += `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                        <td class="py-3 px-4 font-semibold text-gray-700">${apar.kode}</td>
-                        <td class="py-3 px-4 text-xs">
-                            <div class="font-bold text-gray-600">${apar.lokasi}</div>
-                        </td>
-                        <td class="py-3 px-4 text-center text-xs"><b>${apar.jenis}</b><br><span class="text-gray-500">${displayBerat}</span></td>
-                        <td class="py-3 px-4 text-center text-xs text-gray-500">${refillD}</td>
-                        <td class="py-3 px-4 text-center text-xs">${expD}</td>
-                        <td class="py-3 px-4 text-center">${badge}</td>
-                        <td class="py-3 px-4 text-center flex justify-center space-x-2">
-                            <button onclick="app.showChecklistForm('${apar.id}')" class="w-8 h-8 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition shadow-sm" title="Ceklis"><i class="fa-solid fa-check text-xs"></i></button>
-                            <button onclick="app.showDetail('${apar.id}')" class="w-8 h-8 rounded bg-gray-50 text-gray-600 hover:bg-gray-600 hover:text-white transition shadow-sm" title="Detail"><i class="fa-solid fa-eye text-xs"></i></button>
-                            <button onclick="app.printLabel('${apar.id}')" class="w-8 h-8 rounded bg-gray-800 text-white hover:bg-black transition shadow-sm" title="QR Code"><i class="fa-solid fa-qrcode text-xs"></i></button>
-                            <button onclick="app.deleteApar('${apar.id}')" class="w-8 h-8 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </td>
-                    </tr>`;
+                    tb.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                        <td class="py-4 px-4 font-bold text-gray-700 text-xs">${a.kode}</td>
+                        <td class="py-4 px-4 text-xs text-gray-600">${a.lokasi}</td>
+                        <td class="py-4 px-4 text-center text-xs"><b>${a.jenis}</b><br><span class="text-gray-400">${b} kg</span></td>
+                        <td class="py-4 px-4 text-center text-xs text-gray-500">${rD}</td>
+                        <td class="py-4 px-4 text-center text-xs">${eD}</td>
+                        <td class="py-4 px-4 text-center">${bg}</td>
+                        <td class="py-4 px-4 text-center flex justify-center gap-2 admin-only">
+                            <button onclick="app.showChecklistForm('${String(a.id)}')" class="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100 transition shadow-sm" title="Ceklis"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="app.showDetail('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="app.printLabel('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
+                            <button onclick="app.deleteApar('${String(a.id)}')" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                        </td></tr>`;
                 });
             },
+            renderDashboardMovements: function() { const c = document.getElementById('dashboardMovements'); c.innerHTML = ''; const m = [...this.data.movements].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5); if(m.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center p-2">Belum ada riwayat perpindahan.</div>'; return; } m.forEach(x => { const a = this.data.apars.find(z => String(z.id) == String(x.aparId)); const k = a ? a.kode : 'APAR Terhapus'; c.innerHTML += `<div class="flex items-center gap-3 text-xs border-b border-gray-100 pb-2 p-1 hover:bg-orange-50 rounded"><div class="bg-orange-100 text-orange-600 p-1.5 rounded-full"><i class="fa-solid fa-arrow-right-arrow-left"></i></div><div class="flex-1"><div class="flex justify-between"><span class="font-bold text-gray-700">${k}</span><span class="text-[10px] text-gray-400">${new Date(x.timestamp).toLocaleDateString('id-ID')}</span></div><div class="flex items-center gap-1 mt-0.5"><span class="line-through text-red-400">${x.oldLocation}</span><i class="fa-solid fa-arrow-right text-[8px] text-gray-400"></i><span class="font-bold text-green-600">${x.newLocation}</span></div></div></div>`; }); },
+            toggleNotifications: function(e) { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('hidden'); },
+            closeDropdown: function(e) { if (!document.getElementById('notifDropdown').contains(e.target) && !document.getElementById('btnNotif').contains(e.target)) { document.getElementById('notifDropdown').classList.add('hidden'); } },
+            checkNotifications: function() { 
+                const b = document.getElementById('notifBadge'); const l = document.getElementById('notifList'); if (!b || !l) return;
+                l.innerHTML = ''; let c = 0; const t = new Date(); this.data.apars.forEach(a => { const e = new Date(a.expiredDate); const d = Math.ceil((e - t) / (1000 * 60 * 60 * 24)); if (d < 0 && !this.isDismissed('exp', a.id)) { c++; this.addNotifItem(l, 'bg-red-50 border-red-200', 'text-red-700', 'KADALUARSA', `APAR ${a.kode} sudah lewat tanggal kadaluarsa!`, a.id, 'exp'); } else if (d < 30 && d >= 0 && !this.isDismissed('expwarn', a.id)) { c++; this.addNotifItem(l, 'bg-yellow-50 border-yellow-200', 'text-yellow-700', 'AKAN KADALUARSA', `APAR ${a.kode} expired dalam ${d} hari.`, a.id, 'expwarn'); } const lc = this.getLastCheck(a.id); if (lc && String(lc.isGood) === 'false' && !this.isDismissed('dmg', a.id)) { c++; this.addNotifItem(l, 'bg-orange-50 border-orange-200', 'text-orange-700', 'KONDISI RUSAK', `APAR ${a.kode} dilaporkan RUSAK. Butuh perbaikan.`, a.id, 'dmg'); } const cm = this.data.checks.some(k => String(k.aparId) == String(a.id) && k.month == t.getMonth() && k.year == t.getFullYear()); if (!cm && t.getDate() > 20 && !this.isDismissed('uncheck', a.id)) { c++; this.addNotifItem(l, 'bg-blue-50 border-blue-200', 'text-blue-700', 'BELUM DICEK', `APAR ${a.kode} belum dicek bulan ini.`, a.id, 'uncheck'); } }); if (c > 0) { b.classList.remove('hidden'); b.innerText = c; } else { b.classList.add('hidden'); l.innerHTML = '<div class="p-8 text-center text-sm text-gray-400 italic">Semua Aman!</div>'; } },
+            addNotifItem: function(c, b, t, ti, m, i, ty) { c.innerHTML += `<div class="px-4 py-3 border-b ${b} flex justify-between items-start"><div><div class="text-[10px] font-bold ${t} uppercase mb-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>${ti}</div><div class="text-xs font-semibold text-gray-700">${m}</div></div><button onclick="app.dismissNotif('${ty}', '${i}')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button></div>`; },
+            dismissNotif: function(t, i) { this.data.dismissed.push(t + '_' + i); localStorage.setItem('dismissed', JSON.stringify(this.data.dismissed)); this.checkNotifications(); },
+            isDismissed: function(t, i) { return this.data.dismissed.includes(t + '_' + i); },
+            toggleLoading: function(s, t) { const o = document.getElementById('loadingOverlay'); if(s) { o.style.display = 'flex'; if(t) document.getElementById('loadingText').innerText = t; } else { o.style.display = 'none'; } },
+            showToast: function(m, c) { let t = document.getElementById('toast-msg'); if(!t) { t=document.createElement('div'); t.id='toast-msg'; document.body.appendChild(t); } t.className = `fixed bottom-4 right-4 px-4 py-2 rounded bg-${c}-600 text-white text-sm shadow-lg z-50 fade-in`; t.innerText = m; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); },
             
-            // FITUR BARU: Render Riwayat Dashboard
-            renderDashboardMovements: function() {
-                const container = document.getElementById('dashboardMovements');
-                container.innerHTML = '';
-                // Ambil 5 perpindahan terakhir dari seluruh data
-                const allMoves = [...this.data.movements].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
-                
-                if(allMoves.length === 0) {
-                    container.innerHTML = '<div class="text-xs text-gray-400 italic text-center p-2">Belum ada riwayat perpindahan.</div>';
-                    return;
-                }
-
-                allMoves.forEach(m => {
-                    // Cari Kode APAR
-                    const apar = this.data.apars.find(a => a.id == m.aparId);
-                    const kode = apar ? apar.kode : 'APAR Terhapus';
-                    
-                    container.innerHTML += `
-                    <div class="flex items-center gap-3 text-xs border-b border-gray-100 pb-2 p-1 hover:bg-orange-50 rounded">
-                        <div class="bg-orange-100 text-orange-600 p-1.5 rounded-full"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
-                        <div class="flex-1">
-                            <div class="flex justify-between">
-                                <span class="font-bold text-gray-700">${kode}</span>
-                                <span class="text-[10px] text-gray-400">${new Date(m.timestamp).toLocaleDateString('id-ID')}</span>
-                            </div>
-                            <div class="flex items-center gap-1 mt-0.5">
-                                <span class="line-through text-red-400">${m.oldLocation}</span>
-                                <i class="fa-solid fa-arrow-right text-[8px] text-gray-400"></i>
-                                <span class="font-bold text-green-600">${m.newLocation}</span>
-                            </div>
-                        </div>
-                    </div>`;
-                });
+            navigate: function(id) { 
+                if(id==='dashboard') { document.getElementById('editAparId').value = ""; document.getElementById('formTitle').innerText="Tambah APAR Baru"; document.getElementById('btnSaveApar').innerText="Simpan Data"; document.getElementById('pageTitle').innerText = "BERANDA"; }
+                else if(id==='profile') { document.getElementById('pageTitle').innerText = "PROFIL USER"; this.renderProfile(); }
+                else if(id==='settings') { document.getElementById('pageTitle').innerText = "PENGATURAN"; }
+                const header = document.getElementById('top-header'); const isMobile = window.innerWidth < 768;
+                if (document.body.classList.contains('scan-mode') && isMobile && (id === 'detail' || id === 'checklist')) { header.classList.add('hidden'); } else { if (!document.body.classList.contains('scan-mode')) { header.classList.remove('hidden'); } }
+                document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); 
+                document.querySelectorAll('aside button').forEach(b => { b.classList.remove('active-nav'); b.classList.add('inactive-nav'); });
+                const activeBtn = document.getElementById(`nav-${id}`); if(activeBtn) { activeBtn.classList.remove('inactive-nav'); activeBtn.classList.add('active-nav'); }
+                if(id==='dashboard') this.renderDashboard(); 
             },
 
-            // --- NOTIFIKASI TOGGLE ---
-            toggleNotifications: function(event) {
-                event.stopPropagation();
-                const d = document.getElementById('notifDropdown');
-                if (d.classList.contains('hidden')) { d.classList.remove('hidden'); } else { d.classList.add('hidden'); }
-            },
-            closeDropdown: function(event) {
-                const dropdown = document.getElementById('notifDropdown');
-                const btn = document.getElementById('btnNotif');
-                if (!dropdown.contains(event.target) && !btn.contains(event.target)) {
-                    dropdown.classList.add('hidden');
-                }
+            renderProfile: function() {
+                const user = localStorage.getItem('petugasName') || '-'; const role = localStorage.getItem('userRole') || '-'; const id = localStorage.getItem('petugasId') || 'User';
+                document.getElementById('profilePageName').innerText = user; document.getElementById('profilePageRole').innerText = role; document.getElementById('profilePageId').innerText = id; document.getElementById('profilePageEmail').innerText = id.toLowerCase().replace(' ', '') + '@gmail.com';
             },
 
-            // --- NOTIFIKASI SENSITIF ---
-            checkNotifications: function() {
-                const notifBadge = document.getElementById('notifBadge');
-                const notifList = document.getElementById('notifList');
-                notifList.innerHTML = '';
-                let count = 0;
-                const today = new Date();
-                const curMonth = today.getMonth();
-                const curYear = today.getFullYear();
-
-                this.data.apars.forEach(apar => {
-                    const expDate = new Date(apar.expiredDate);
-                    const daysToEx = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                    
-                    if (daysToEx < 0 && !this.isDismissed('exp', apar.id)) {
-                        count++;
-                        this.addNotifItem(notifList, 'bg-red-50 border-red-200', 'text-red-700', 'KADALUARSA', `APAR ${apar.kode} sudah lewat tanggal kadaluarsa!`, apar.id, 'exp');
-                    } else if (daysToEx < 30 && daysToEx >= 0 && !this.isDismissed('expwarn', apar.id)) {
-                        count++;
-                        this.addNotifItem(notifList, 'bg-yellow-50 border-yellow-200', 'text-yellow-700', 'AKAN KADALUARSA', `APAR ${apar.kode} expired dalam ${daysToEx} hari.`, apar.id, 'expwarn');
-                    }
-
-                    const lastCheck = this.getLastCheck(apar.id);
-                    if (lastCheck && String(lastCheck.isGood) === 'false' && !this.isDismissed('dmg', apar.id)) {
-                        count++;
-                        this.addNotifItem(notifList, 'bg-orange-50 border-orange-200', 'text-orange-700', 'KONDISI RUSAK', `APAR ${apar.kode} dilaporkan RUSAK. Butuh perbaikan.`, apar.id, 'dmg');
-                    }
-
-                    const checkedThisMonth = this.data.checks.some(c => c.aparId == apar.id && c.month == curMonth && c.year == curYear);
-                    if (!checkedThisMonth && today.getDate() > 20 && !this.isDismissed('uncheck', apar.id)) { 
-                        count++;
-                        this.addNotifItem(notifList, 'bg-blue-50 border-blue-200', 'text-blue-700', 'BELUM DICEK', `APAR ${apar.kode} belum dicek bulan ini.`, apar.id, 'uncheck');
-                    }
-                });
-
-                if (count > 0) { notifBadge.classList.remove('hidden'); notifBadge.innerText = count; } 
-                else { notifBadge.classList.add('hidden'); notifList.innerHTML = '<div class="p-8 text-center text-sm text-gray-400 italic">Semua Aman! Tidak ada notifikasi.</div>'; }
-            },
-            addNotifItem: function(container, bgClass, textClass, title, msg, id, type) {
-                container.innerHTML += `
-                    <div class="px-4 py-3 border-b ${bgClass} flex justify-between items-start">
-                        <div>
-                            <div class="text-[10px] font-bold ${textClass} uppercase mb-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>${title}</div>
-                            <div class="text-xs font-semibold text-gray-700">${msg}</div>
-                        </div>
-                        <button onclick="app.dismissNotif('${type}', '${id}')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
-                    </div>`;
-            },
-            dismissNotif: function(type, id) { this.data.dismissed.push(type + '_' + id); localStorage.setItem('dismissed', JSON.stringify(this.data.dismissed)); this.checkNotifications(); },
-            isDismissed: function(type, id) { return this.data.dismissed.includes(type + '_' + id); },
-
-            // --- CRUD APAR ---
-            saveApar: async function(e) { 
-                e.preventDefault(); 
-                const editId = document.getElementById('editAparId').value;
-                const payload = {
-                    action: editId ? "editApar" : "addApar",
-                    id: editId || Date.now().toString(),
-                    kode: document.getElementById('inputKode').value, 
-                    lokasi: document.getElementById('inputLokasi').value, 
-                    jenis: document.getElementById('inputJenis').value, 
-                    berat: document.getElementById('inputBerat').value.replace(',', '.'), 
-                    refillDate: document.getElementById('inputRefill').value,
-                    expiredDate: document.getElementById('inputExpired').value, 
-                    createdAt: new Date() 
-                };
-                const success = await this.sendData(payload); 
-                if(success) { e.target.reset(); this.showDetail(payload.id); } 
-            },
-            editCurrentApar: function() {
-                const id = this.data.currentDetailId;
-                const apar = this.data.apars.find(a => a.id == id);
-                if(!apar) return;
-                document.getElementById('editAparId').value = apar.id;
-                document.getElementById('inputKode').value = apar.kode;
-                document.getElementById('inputLokasi').value = apar.lokasi;
-                document.getElementById('inputJenis').value = apar.jenis;
-                document.getElementById('inputBerat').value = apar.berat;
-                document.getElementById('inputRefill').value = apar.refillDate ? new Date(apar.refillDate).toISOString().split('T')[0] : '';
-                document.getElementById('inputExpired').value = new Date(apar.expiredDate).toISOString().split('T')[0];
-                document.getElementById('formTitle').innerText = "Edit Data APAR";
-                document.getElementById('btnSaveApar').innerText = "Update Perubahan";
-                this.navigate('add-apar');
-            },
-            deleteApar: async function(id) { if(confirm('Hapus APAR ini permanen?')) { await this.sendData({ action: "deleteApar", id: id }); this.renderDashboard(); } },
-
-            // --- FITUR: MOVE APAR ---
-            openMoveModal: function() {
-                const id = this.data.currentDetailId;
-                const apar = this.data.apars.find(a => a.id == id);
-                if(!apar) return;
-                document.getElementById('moveCurrentLoc').innerText = apar.lokasi;
-                document.getElementById('moveNewLoc').value = "";
-                document.getElementById('movePetugas').value = "";
-                document.getElementById('moveAparModal').classList.remove('hidden');
-            },
-            submitMove: async function() {
-                const id = this.data.currentDetailId;
-                const apar = this.data.apars.find(a => a.id == id);
-                const newLoc = document.getElementById('moveNewLoc').value.trim();
-                const user = document.getElementById('movePetugas').value.trim();
-                if(!newLoc) return alert("Lokasi baru harus diisi!");
-                
-                const payload = {
-                    action: "moveApar",
-                    id: id,
-                    oldLokasi: apar.lokasi,
-                    newLokasi: newLoc,
-                    petugas: user,
-                    timestamp: new Date()
-                };
-                
-                await this.sendData(payload);
-                document.getElementById('moveAparModal').classList.add('hidden');
-                this.showDetail(id); // Reload detail
-            },
-            renderMovementHistory: function(id) {
-                const container = document.getElementById('movementHistoryBody');
-                container.innerHTML = '';
-                const history = this.data.movements.filter(m => m.aparId == id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                
-                if(history.length === 0) {
-                    container.innerHTML = '<div class="text-xs text-gray-400 italic text-center">Belum ada riwayat perpindahan.</div>';
-                    return;
-                }
-                
-                history.forEach(m => {
-                    container.innerHTML += `
-                    <div class="flex items-start gap-2 text-xs border-b border-gray-100 pb-2">
-                        <i class="fa-solid fa-arrow-right text-orange-500 mt-0.5"></i>
-                        <div>
-                            <div class="font-bold text-gray-700">${new Date(m.timestamp).toLocaleDateString('id-ID')} - ${new Date(m.timestamp).toLocaleTimeString('id-ID')}</div>
-                            <div class="text-gray-600">Dari: <span class="font-semibold line-through text-red-400">${m.oldLocation}</span></div>
-                            <div class="text-gray-600">Ke: <span class="font-semibold text-green-600">${m.newLocation}</span></div>
-                            <div class="text-gray-400 text-[10px] mt-0.5">Oleh: ${m.petugas || '-'}</div>
-                        </div>
-                    </div>`;
-                });
+            updateAccount: async function(e) {
+                e.preventDefault(); const oldPass = document.getElementById('setOldPass').value; const newUser = document.getElementById('setNewUser').value; const newPass = document.getElementById('setNewPass').value; const currentId = localStorage.getItem('petugasId');
+                if (!oldPass) return alert("Masukkan password lama untuk konfirmasi!"); if (!newUser && !newPass) return alert("Tidak ada perubahan yang diisi.");
+                this.toggleLoading(true, "Mengupdate Akun..."); const payload = { action: "changeAccount", oldUser: currentId, oldPass: oldPass, newUser: newUser || currentId, newPass: newPass || oldPass }; const s = await this.sendData(payload); this.toggleLoading(false);
+                if (s) { alert("Akun berhasil diupdate! Silakan login ulang."); this.handleLogout(); } else { alert("Gagal update akun. Cek password lama Anda."); }
             },
 
-            // --- CHECKLIST & HISTORY ---
+            setupFilters: function() { const y = document.getElementById('yearFilter'); const m = document.getElementById('monthFilter'); if(!y) return; [2025,2026,2027,2028,2029].forEach(yr => y.innerHTML += `<option value="${yr}" ${yr===new Date().getFullYear()?'selected':''}>${yr}</option>`); m.innerHTML = '<option value="">Semua Bulan</option>'; this.data.fullMonths.forEach((mn, i) => m.innerHTML += `<option value="${i}">${mn}</option>`); },
+            getLastCheck: function(id) { return this.data.checks.filter(c => String(c.aparId) === String(id)).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]; },
+            updateLiveStatus: function() { const c = document.querySelectorAll('input[name="checkItem"]'); const all = Array.from(c).every(x => x.checked); const tj = !c[4].checked; const ib = !c[7].checked; let m = '', cl = '', pb = document.getElementById('evidenceContainer'); if (all) { m = '<div class="text-green-600 font-bold"><i class="fa-solid fa-check-circle text-2xl"></i><br>KONDISI BAIK</div>'; cl = 'border-green-300 bg-green-50'; pb.classList.add('hidden'); } else { pb.classList.remove('hidden'); if (tj || ib) { m = '<div class="text-purple-600 font-bold"><i class="fa-solid fa-fill-drip text-2xl"></i><br>APAR HARUS DIISI ULANG</div>'; cl = 'border-purple-300 bg-purple-50'; } else { m = '<div class="text-red-600 font-bold"><i class="fa-solid fa-triangle-exclamation text-2xl"></i><br>KONDISI RUSAK</div>'; cl = 'border-red-300 bg-red-50'; } } const b = document.getElementById('liveStatusBox'); b.innerHTML = m; b.className = `mb-6 p-4 rounded-lg border-2 text-center transition ${cl}`; },
+            
             showDetail: function(id) {
-                this.data.currentDetailId = id;
-                const apar = this.data.apars.find(a => a.id == id); if (!apar) return alert('Data hilang.');
-                this.navigate('detail'); 
-                document.getElementById('detailKode').innerText = apar.kode; 
-                document.getElementById('detailLokasi').innerText = apar.lokasi; 
-                document.getElementById('detailJenis').innerText = apar.jenis; 
-                document.getElementById('detailBerat').innerText = apar.berat + ' kg'; 
-                document.getElementById('detailRefill').innerText = apar.refillDate ? new Date(apar.refillDate).toLocaleDateString('id-ID') : '-';
-                document.getElementById('detailExpired').innerText = new Date(apar.expiredDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                document.getElementById('btnChecklistNow').onclick = () => this.showChecklistForm(id);
-                
-                const lastCheck = this.getLastCheck(id);
-                const statusBanner = document.getElementById('scanStatusBanner');
-                const tlContainer = document.getElementById('tindakLanjutContainer');
-                
-                this.renderMiniHistory(id, 'detailHistoryBody');
-                this.renderMovementHistory(id); 
-                statusBanner.classList.remove('hidden');
-                
-                if (lastCheck) {
-                    const isG = String(lastCheck.isGood).toLowerCase() === 'true';
-                    if (isG) { 
-                        statusBanner.className = "mb-4 p-4 rounded-lg text-center bg-green-100 border border-green-300"; 
-                        document.getElementById('scanStatusText').className = "text-2xl font-black text-green-700"; 
-                        document.getElementById('scanStatusText').innerHTML = 'KONDISI BAIK <i class="fa-solid fa-circle-check"></i>';
-                        tlContainer.classList.add('hidden');
-                    } else { 
-                        statusBanner.className = "mb-4 p-4 rounded-lg text-center bg-red-100 border border-red-300 animate-pulse"; 
-                        document.getElementById('scanStatusText').className = "text-2xl font-black text-red-700"; 
-                        document.getElementById('scanStatusText').innerHTML = 'KONDISI RUSAK <i class="fa-solid fa-circle-xmark"></i>';
-                        tlContainer.classList.remove('hidden');
-                    }
-                    document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + new Date(lastCheck.timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
-                } else { 
-                    statusBanner.className = "mb-4 p-4 rounded-lg text-center bg-gray-100 border border-gray-300"; 
-                    document.getElementById('scanStatusText').innerHTML = "BELUM ADA DATA"; 
-                    tlContainer.classList.add('hidden');
-                }
+                this.data.currentDetailId = id; const apar = this.data.apars.find(a => String(a.id) === String(id)); 
+                if (!apar) { alert('Sedang memuat data terbaru... Silakan tunggu sebentar dan coba lagi.'); this.fetchDataWithTimeout(); return; }
+                this.navigate('detail'); document.getElementById('detailKode').innerText = apar.kode; document.getElementById('detailLokasi').innerText = apar.lokasi; document.getElementById('detailJenis').innerText = apar.jenis; document.getElementById('detailBerat').innerText = apar.berat + ' kg'; document.getElementById('detailRefill').innerText = apar.refillDate ? new Date(apar.refillDate).toLocaleDateString('id-ID') : '-'; document.getElementById('detailExpired').innerText = new Date(apar.expiredDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }); document.getElementById('btnChecklistNow').onclick = () => this.showChecklistForm(id);
+                const lC = this.getLastCheck(id); const sB = document.getElementById('scanStatusBanner'); const tL = document.getElementById('tindakLanjutContainer'); const iE = new Date(apar.expiredDate) < new Date();
+                this.renderMiniHistory(id, 'detailHistoryBody'); this.renderMovementHistory(id); sB.classList.remove('hidden');
+                if (lC) { 
+                    const isG = String(lC.isGood).toLowerCase() === 'true'; if (isG) { sB.className = "mb-6 p-4 rounded-lg text-center bg-green-100 border border-green-300"; document.getElementById('scanStatusText').className = "text-2xl font-black text-green-700"; document.getElementById('scanStatusText').innerHTML = 'KONDISI BAIK <i class="fa-solid fa-circle-check"></i>'; tL.classList.add('hidden'); } else { if (lC.notes && lC.notes.includes('HARUS DIISI ULANG')) { sB.className = "mb-6 p-4 rounded-lg text-center bg-purple-100 border border-purple-300 animate-pulse"; document.getElementById('scanStatusText').className = "text-2xl font-black text-purple-700"; document.getElementById('scanStatusText').innerHTML = 'APAR HARUS DIISI ULANG <i class="fa-solid fa-fill-drip"></i>'; } else { sB.className = "mb-6 p-4 rounded-lg text-center bg-red-100 border border-red-300 animate-pulse"; document.getElementById('scanStatusText').className = "text-2xl font-black text-red-700"; document.getElementById('scanStatusText').innerHTML = 'KONDISI RUSAK <i class="fa-solid fa-circle-xmark"></i>'; } tL.classList.remove('hidden'); } document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + new Date(lC.timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
+                } else { sB.className = "mb-6 p-4 rounded-lg text-center bg-gray-100 border border-gray-300"; document.getElementById('scanStatusText').innerHTML = "BELUM ADA DATA"; tL.classList.add('hidden'); }
             },
-            renderMiniHistory: function(id, targetId) {
-                const container = document.getElementById(targetId); container.innerHTML = '';
-                const history = this.data.checks.filter(c => c.aparId == id).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5);
-                history.forEach((h, index) => {
-                    const isG = String(h.isGood).toLowerCase() === 'true';
-                    container.innerHTML += `
-                    <div class="p-3 rounded-lg border ${isG ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} flex items-start gap-3 relative group">
-                        <i class="fa-solid ${isG ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600'} mt-1"></i>
+
+            renderMiniHistory: function(id, tId) { 
+                const c = document.getElementById(tId); c.innerHTML = ''; 
+                const h = this.data.checks.filter(x => String(x.aparId) === String(id)).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5); 
+                h.forEach(x => { 
+                    const isG = String(x.isGood).toLowerCase() === 'true'; 
+                    let stTxt = isG ? 'BAIK' : 'RUSAK';
+                    let stCol = isG ? 'text-green-700 border-green-600 bg-green-50' : 'text-red-700 border-red-600 bg-red-50';
+                    let icon = isG ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600';
+
+                    if (!isG && x.notes && x.notes.includes('HARUS DIISI ULANG')) {
+                        stTxt = 'ISI ULANG';
+                        stCol = 'text-purple-700 border-purple-600 bg-purple-50';
+                        icon = 'fa-fill-drip text-purple-600';
+                    }
+
+                    c.innerHTML += `<div class="p-3 rounded-lg border ${isG ? 'bg-green-50 border-green-200' : (stTxt === 'ISI ULANG' ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200')} flex items-start gap-3 relative group">
+                        <i class="fa-solid ${icon} mt-1"></i>
                         <div class="flex-1">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-xs uppercase">${new Date(h.timestamp).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'})}</span>
-                                <span class="text-[10px] font-bold border border-current px-1 rounded ${isG ? 'text-green-700' : 'text-red-700'}">${isG ? 'BAIK' : 'RUSAK'}</span>
+                                <span class="font-bold text-xs uppercase">${new Date(x.timestamp).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'})}</span>
+                                <span class="text-[10px] font-bold border border-current px-1 rounded ${stCol.split(' ')[0]}">${stTxt}</span>
                             </div>
-                            <div class="text-xs italic text-gray-600 mt-1">"${h.notes}"</div>
-                            <div class="text-[10px] text-gray-500 font-bold mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ${h.petugas || '-'}</div>
+                            <div class="text-xs italic text-gray-600 mt-1">"${x.notes}"</div>
+                            <div class="text-[10px] text-gray-500 font-bold mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ${x.petugas || '-'}</div>
                         </div>
-                        <button onclick="app.editHistory('${id}', '${h.timestamp}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white border shadow-sm p-1 rounded text-blue-500 hover:text-blue-700 transition"><i class="fa-solid fa-pen text-xs"></i></button>
-                    </div>`;
-                });
+                        <button onclick="app.editHistory('${id}', '${x.timestamp}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white border shadow-sm p-1 rounded text-blue-500 hover:text-blue-700 transition admin-only"><i class="fa-solid fa-pen text-xs"></i></button>
+                    </div>`; 
+                }); 
             },
-            editHistory: function(aparId, timestamp) {
-                const check = this.data.checks.find(c => c.aparId == aparId && c.timestamp == timestamp);
-                if(check) {
-                    this.data.historyToEdit = check;
-                    document.getElementById('editHistoryStatus').value = check.isGood;
-                    document.getElementById('editHistoryNote').value = check.notes;
-                    document.getElementById('editHistoryModal').classList.remove('hidden');
-                }
-            },
-            saveEditedHistory: async function() {
-                if(!this.data.historyToEdit) return;
-                const newStatus = document.getElementById('editHistoryStatus').value;
-                const newNote = document.getElementById('editHistoryNote').value;
-                const payload = {
-                    action: "editCheck",
-                    aparId: this.data.historyToEdit.aparId,
-                    timestamp: this.data.historyToEdit.timestamp, // key
-                    isGood: newStatus,
-                    notes: newNote
-                };
-                await this.sendData(payload);
-                document.getElementById('editHistoryModal').classList.add('hidden');
-                this.showDetail(this.data.historyToEdit.aparId);
-            },
-            showTindakLanjutModal: function() { document.getElementById('tindakLanjutModal').classList.remove('hidden'); },
-            submitTindakLanjut: async function() {
-                const id = this.data.currentDetailId;
-                const note = "TINDAK LANJUT: " + document.getElementById('tlNote').value;
-                const ptgs = document.getElementById('tlPetugas').value;
-                // Tindak lanjut = Input ceklis baru tapi otomatis BAIK
-                const checkData = { 
-                    action: "addCheck", aparId: id, year: new Date().getFullYear(), month: new Date().getMonth(), 
-                    timestamp: new Date().toISOString(), isGood: true, notes: note, petugas: ptgs 
-                };
-                await this.sendData(checkData);
-                document.getElementById('tindakLanjutModal').classList.add('hidden');
-                this.showDetail(id);
-            },
-            submitChecklist: async function(e) {
-                e.preventDefault(); const id = document.getElementById('checkAparId').value; let allChecked = true; document.querySelectorAll('input[name="checkItem"]').forEach(cb => { if (!cb.checked) allChecked = false; });
-                const checkData = { 
-                    action: "addCheck", aparId: id, year: new Date(document.getElementById('inputCheckDate').value).getFullYear(), 
-                    month: new Date(document.getElementById('inputCheckDate').value).getMonth(), timestamp: new Date(document.getElementById('inputCheckDate').value).toISOString(), 
-                    isGood: allChecked, notes: document.getElementById('inputNotes').value.trim() || (allChecked ? 'Lengkap & Berfungsi' : 'Ada kerusakan'), 
-                    petugas: document.getElementById('inputPetugas').value.trim() 
-                };
-                const success = await this.sendData(checkData); 
-                if(success) { 
-                    this.showDetail(id); 
-                    if(allChecked) {
-                        this.showToast("Terima kasih sudah rawat aku 🤗", "green");
-                    } else {
-                        this.showToast("Tolong perbaiki aku 😢", "red");
-                    }
-                }
-            },
-            
-            // --- EXPORT & PRINT (UPDATED) ---
-            exportToExcel: function() {
-                const sMonth = document.getElementById('monthFilter').value;
-                
-                // TABLE 1: DATA UTAMA
-                let table1 = `<h3 style="margin-bottom:5px;">DATA PEMERIKSAAN APAR</h3><table border="1"><thead><tr style="background:#ddd;"><th>Kode</th><th>Lokasi</th><th>Jenis</th><th>Tgl Isi</th><th>Exp</th><th>Status</th><th>Catatan</th></tr></thead><tbody>`;
-                this.data.apars.forEach(apar => {
-                    let lastCheck;
-                    if(sMonth !== "") lastCheck = this.data.checks.find(c => c.aparId == apar.id && c.month == sMonth);
-                    else lastCheck = this.getLastCheck(apar.id);
-                    
-                    const status = lastCheck ? (String(lastCheck.isGood)==='true' ? "BAIK" : "RUSAK") : "BELUM CEK";
-                    const note = lastCheck ? lastCheck.notes : "-";
-                    const refill = apar.refillDate ? new Date(apar.refillDate).toLocaleDateString('id-ID') : "-";
-                    
-                    table1 += `<tr><td>${apar.kode}</td><td>${apar.lokasi}</td><td>${apar.jenis}</td><td>${refill}</td><td>${new Date(apar.expiredDate).toLocaleDateString('id-ID')}</td><td>${status}</td><td>${note}</td></tr>`;
-                });
-                table1 += `</tbody></table><br><br>`;
 
-                // TABLE 2: RIWAYAT PERPINDAHAN (FITUR BARU DI EXCEL)
-                let table2 = `<h3 style="margin-bottom:5px;">RIWAYAT PERPINDAHAN LOKASI</h3><table border="1"><thead><tr style="background:#ffedd5;"><th>Waktu</th><th>Kode APAR</th><th>Dari Ruangan</th><th>Ke Ruangan</th><th>Petugas</th></tr></thead><tbody>`;
-                
-                const movements = [...this.data.movements].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                if(movements.length > 0) {
-                    movements.forEach(m => {
-                        const apar = this.data.apars.find(a => a.id == m.aparId);
-                        const kode = apar ? apar.kode : 'Unknown';
-                        table2 += `<tr><td>${new Date(m.timestamp).toLocaleString('id-ID')}</td><td>${kode}</td><td>${m.oldLocation}</td><td>${m.newLocation}</td><td>${m.petugas}</td></tr>`;
-                    });
-                } else {
-                    table2 += `<tr><td colspan="5" style="text-align:center;">Belum ada riwayat perpindahan.</td></tr>`;
-                }
-                table2 += `</tbody></table>`;
-
-                const fullContent = table1 + table2;
-                const a = document.createElement('a'); 
-                a.href = window.URL.createObjectURL(new Blob([fullContent], { type: 'application/vnd.ms-excel' })); 
-                a.download = `Laporan_Lengkap_APAR_RSJMM.xls`; 
-                a.click();
-            },
-            
-            // --- UTILS ---
-            toggleLoading: function(show, text) { const o = document.getElementById('loadingOverlay'); if(show) { o.style.display = 'flex'; if(text) document.getElementById('loadingText').innerText = text; } else { o.style.display = 'none'; } },
-            showToast: function(msg, color) { let t = document.getElementById('toast-msg'); if(!t) { t=document.createElement('div'); t.id='toast-msg'; document.body.appendChild(t); } t.className = `fixed bottom-4 right-4 px-4 py-2 rounded bg-${color}-600 text-white text-sm shadow-lg z-50 fade-in`; t.innerText = msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); },
-            navigate: function(id) { 
-                if(id==='dashboard') { document.getElementById('editAparId').value = ""; document.getElementById('formTitle').innerText="Tambah APAR Baru"; document.getElementById('btnSaveApar').innerText="Simpan Data"; }
-                document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); if(id==='dashboard') this.renderDashboard(); 
-            },
-            setupFilters: function() { 
-                const y = document.getElementById('yearFilter'); const m = document.getElementById('monthFilter');
-                [2024,2025,2026,2027].forEach(yr => y.innerHTML += `<option value="${yr}" ${yr===new Date().getFullYear()?'selected':''}>${yr}</option>`);
-                m.innerHTML = '<option value="">Semua Bulan</option>';
-                this.data.fullMonths.forEach((mn, i) => m.innerHTML += `<option value="${i}">${mn}</option>`);
-            },
-            getLastCheck: function(id) { return this.data.checks.filter(c => c.aparId == id).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))[0]; },
-            updateLiveStatus: function() { 
-                const all = Array.from(document.querySelectorAll('input[name="checkItem"]')).every(c=>c.checked);
-                document.getElementById('liveStatusBox').innerHTML = all ? '<div class="text-green-600 font-bold"><i class="fa-solid fa-check-circle text-2xl"></i><br>KONDISI BAIK</div>' : '<div class="text-red-600 font-bold"><i class="fa-solid fa-triangle-exclamation text-2xl"></i><br>KONDISI RUSAK</div>';
-                document.getElementById('liveStatusBox').className = `mb-6 p-4 rounded-lg border-2 text-center transition ${all?'border-green-300 bg-green-50':'border-red-300 bg-red-50'}`;
-            },
-            showChecklistForm: function(id) { this.navigate('checklist'); document.getElementById('checkAparId').value = id; document.querySelectorAll('input[name="checkItem"]').forEach(c=>c.checked=true); document.getElementById('inputCheckDate').value = new Date().toISOString().split('T')[0]; document.getElementById('inputNotes').value=''; document.getElementById('inputPetugas').value=''; this.updateLiveStatus(); this.renderMiniHistory(id,'miniHistoryBody'); },
+            showChecklistForm: function(id) { this.navigate('checklist'); document.getElementById('checkAparId').value = id; document.querySelectorAll('input[name="checkItem"]').forEach(c=>c.checked=true); document.getElementById('inputCheckDate').value = new Date().toISOString().split('T')[0]; document.getElementById('inputNotes').value=''; document.getElementById('inputPetugas').value= localStorage.getItem('petugasName') || ''; document.getElementById('evidencePhoto').value = ""; this.updateLiveStatus(); this.renderMiniHistory(id,'miniHistoryBody'); },
             backToDetail: function() { this.showDetail(document.getElementById('checkAparId').value); },
             openLocation: function(loc) { window.open(`https://www.google.com/maps/search/${encodeURIComponent(loc + " RSJMM Bogor")}`, '_blank'); },
-            printAllLabels: function() { /* (Logic same as prev) */ if(this.data.apars.length===0) return; const c = document.getElementById('printAllArea'); c.innerHTML=''; this.data.apars.forEach(a=>{ const d=document.createElement('div'); d.className='qr-card'; d.innerHTML=`<b>${a.kode}</b><div id="qr-${a.id}" style="display:flex;justify-content:center;margin:5px 0;"></div><small>${a.lokasi}</small>`; c.appendChild(d); new QRCode(d.querySelector(`#qr-${a.id}`), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:80, height:80}); }); document.body.classList.add('printing-all'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-all');},1000); },
-            printLabel: function(id) { const a=this.data.apars.find(x=>x.id==id); if(!a)return; document.getElementById('printLabelKode').innerText=a.kode; document.getElementById('printLabelLokasi').innerText=a.lokasi; document.getElementById('printQrContainer').innerHTML=''; new QRCode(document.getElementById('printQrContainer'), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:120, height:120}); document.body.classList.add('printing-label'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-label');},500); },
-            shareStatus: async function() { const el=document.getElementById('captureArea'); el.classList.add('capturing'); try { const cvs = await html2canvas(el, {scale:2}); const win = window.open(''); win.document.write(`<img src="${cvs.toDataURL()}">`); setTimeout(()=>win.print(),500); el.classList.remove('capturing'); } catch(e){alert('Gagal Print'); el.classList.remove('capturing');}}
+            printAllLabels: function() { if(this.data.apars.length===0) return; const c = document.getElementById('printAllArea'); c.innerHTML=''; this.data.apars.forEach(a=>{ const d=document.createElement('div'); d.className='qr-card'; d.innerHTML=`<b>${a.kode}</b><div id="qr-${a.id}" style="display:flex;justify-content:center;margin:5px 0;"></div><small>${a.lokasi}</small>`; c.appendChild(d); new QRCode(d.querySelector(`#qr-${a.id}`), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:80, height:80}); }); document.body.classList.add('printing-all'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-all');},1000); },
+            printLabel: function(id) { const a=this.data.apars.find(x=>String(x.id)==String(id)); if(!a)return; document.getElementById('printLabelKode').innerText=a.kode; document.getElementById('printLabelLokasi').innerText=a.lokasi; document.getElementById('printQrContainer').innerHTML=''; new QRCode(document.getElementById('printQrContainer'), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:120, height:120}); document.body.classList.add('printing-label'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-label');},500); },
+            shareStatus: async function() { const el=document.getElementById('captureArea'); el.classList.add('capturing'); try { const cvs = await html2canvas(el, {scale:2}); const win = window.open(''); win.document.write(`<img src="${cvs.toDataURL()}">`); setTimeout(()=>win.print(),500); el.classList.remove('capturing'); } catch(e){alert('Gagal Print'); el.classList.remove('capturing');}},
+            compressImage: function(file) { return new Promise((resolve) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = (event) => { const img = new Image(); img.src = event.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const maxWidth = 600; const scaleSize = maxWidth / img.width; canvas.width = maxWidth; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.5)); } } }); },
+            
+            submitChecklist: async function(e) { 
+                e.preventDefault(); 
+                const id = document.getElementById('checkAparId').value; 
+                if (!id) return alert("Error: ID APAR tidak terbaca."); 
+                
+                let allChecked = true; 
+                let checklistText = "";
+                let uncheckedItems = [];
+                const itemLabels = ["Nozzle", "Pin", "Segel", "Selang", "Tekanan", "Body", "Hanger", "Isi"];
+                
+                const checks = document.querySelectorAll('input[name="checkItem"]'); 
+                checks.forEach((cb, index) => { 
+                    if (!cb.checked) {
+                        allChecked = false; 
+                        uncheckedItems.push(itemLabels[index]);
+                    }
+                }); 
+                
+                if(allChecked) {
+                    checklistText = "Nozzle/Corong, Pin pengaman, Segel Utuh, Selang (Hose), Tekanan, Body Tabung, Hanger /Dudukan, Isi --> Semua Item Bagus & Berfungsi.";
+                } else {
+                    checklistText = "Item Bermasalah (Tidak Diceklis): " + uncheckedItems.join(", ");
+                }
+
+                const tj = !checks[4].checked; // Tekanan
+                const ib = !checks[7].checked; // Isi
+                let anp = ""; 
+                
+                if (tj || ib) { 
+                    anp = "[HARUS DIISI ULANG] "; 
+                } else if (!allChecked) {
+                    anp = "[RUSAK] ";
+                }
+
+                let img = ""; 
+                if (!allChecked) { 
+                    const fi = document.getElementById('evidencePhoto'); 
+                    if (fi.files.length === 0) { alert("WAJIB Upload Foto Bukti!"); return; } 
+                    this.toggleLoading(true, "Mengompres Foto..."); 
+                    img = await this.compressImage(fi.files[0]); 
+                    this.toggleLoading(false); 
+                    anp += "[FOTO TERLAMPIR] "; 
+                } 
+                
+                const un = document.getElementById('inputNotes').value.trim(); 
+                let fn = anp + checklistText + (un ? " | Catatan: " + un : ""); 
+                
+                const cd = { action: "addCheck", aparId: id, year: new Date(document.getElementById('inputCheckDate').value).getFullYear(), month: new Date(document.getElementById('inputCheckDate').value).getMonth(), timestamp: new Date(document.getElementById('inputCheckDate').value).toISOString(), isGood: allChecked, notes: fn, petugas: document.getElementById('inputPetugas').value.trim(), imageData: img }; 
+                const s = await this.sendData(cd); 
+                if(s) { 
+                    this.showDetail(id); 
+                    if(allChecked) { this.showToast("Terima kasih!", "green"); } else { this.showToast("Tersimpan!", "red"); } 
+                } 
+            },
+            
+            editHistory: function(id, ts) { const c = this.data.checks.find(x => String(x.aparId) == String(id) && x.timestamp == ts); if(c) { this.data.historyToEdit = c; document.getElementById('editHistoryStatus').value = c.isGood; document.getElementById('editHistoryNote').value = c.notes; document.getElementById('editHistoryModal').classList.remove('hidden'); } },
+            saveEditedHistory: async function() { if(!this.data.historyToEdit) return; const p = { action: "editCheck", aparId: this.data.historyToEdit.aparId, timestamp: this.data.historyToEdit.timestamp, isGood: document.getElementById('editHistoryStatus').value, notes: document.getElementById('editHistoryNote').value }; await this.sendData(p); document.getElementById('editHistoryModal').classList.add('hidden'); this.showDetail(this.data.historyToEdit.aparId); },
+            showTindakLanjutModal: function() { document.getElementById('tindakLanjutModal').classList.remove('hidden'); },
+            submitTindakLanjut: async function() { const id = this.data.currentDetailId; const p = { action: "addCheck", aparId: id, year: new Date().getFullYear(), month: new Date().getMonth(), timestamp: new Date().toISOString(), isGood: true, notes: "TINDAK LANJUT: " + document.getElementById('tlNote').value, petugas: document.getElementById('tlPetugas').value }; await this.sendData(p); document.getElementById('tindakLanjutModal').classList.add('hidden'); this.showDetail(id); },
+            editCurrentApar: function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); if(!a) return; document.getElementById('editAparId').value = a.id; document.getElementById('inputKode').value = a.kode; document.getElementById('inputLokasi').value = a.lokasi; document.getElementById('inputJenis').value = a.jenis; document.getElementById('inputBerat').value = a.berat; document.getElementById('inputRefill').value = a.refillDate ? new Date(a.refillDate).toISOString().split('T')[0] : ''; document.getElementById('inputExpired').value = new Date(a.expiredDate).toISOString().split('T')[0]; document.getElementById('formTitle').innerText = "Edit Data APAR"; document.getElementById('btnSaveApar').innerText = "Update"; this.navigate('add-apar'); },
+            saveApar: async function(e) { e.preventDefault(); const eid = document.getElementById('editAparId').value; const p = { action: eid ? "editApar" : "addApar", id: eid || Date.now().toString(), kode: document.getElementById('inputKode').value, lokasi: document.getElementById('inputLokasi').value, jenis: document.getElementById('inputJenis').value, berat: document.getElementById('inputBerat').value.replace(',', '.'), refillDate: document.getElementById('inputRefill').value, expiredDate: document.getElementById('inputExpired').value, createdAt: new Date() }; const s = await this.sendData(p); if(s) { e.target.reset(); this.showDetail(p.id); } },
+            deleteApar: async function(id) { if(confirm('Hapus Permanen?')) { await this.sendData({ action: "deleteApar", id: id }); this.renderDashboard(); } },
+            openMoveModal: function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); if(!a) return; document.getElementById('moveCurrentLoc').innerText = a.lokasi; document.getElementById('moveNewLoc').value = ""; document.getElementById('movePetugas').value = localStorage.getItem('petugasName') || ""; document.getElementById('moveAparModal').classList.remove('hidden'); },
+            submitMove: async function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); const nl = document.getElementById('moveNewLoc').value.trim(); if(!nl) return alert("Lokasi baru kosong!"); const p = { action: "moveApar", id: id, oldLokasi: a.lokasi, newLokasi: nl, petugas: document.getElementById('movePetugas').value.trim(), timestamp: new Date() }; await this.sendData(p); document.getElementById('moveAparModal').classList.add('hidden'); this.showDetail(id); },
+            renderMovementHistory: function(id) { const c = document.getElementById('movementHistoryBody'); c.innerHTML = ''; const h = this.data.movements.filter(x => String(x.aparId) == String(id)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)); if(h.length===0){c.innerHTML='<div class="text-xs text-gray-400 italic text-center">Belum ada riwayat.</div>';return;} h.forEach(m => { c.innerHTML += `<div class="flex items-start gap-2 text-xs border-b border-gray-100 pb-2"><i class="fa-solid fa-arrow-right text-orange-500 mt-0.5"></i><div><div class="font-bold text-gray-700">${new Date(m.timestamp).toLocaleDateString('id-ID')}</div><div class="text-gray-600">Dari: <span class="font-semibold line-through text-red-400">${m.oldLocation}</span></div><div class="text-gray-600">Ke: <span class="font-semibold text-green-600">${m.newLocation}</span></div><div class="text-gray-400 text-[10px] mt-0.5">Oleh: ${m.petugas || '-'}</div></div></div>`; }); },
+
+            openExportModal: function() {
+                const em = document.getElementById('exportModal');
+                em.classList.remove('hidden');
+                const sm = document.getElementById('exportMonth');
+                sm.innerHTML = '';
+                this.data.fullMonths.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.text = m; if(i === new Date().getMonth()) opt.selected = true; sm.appendChild(opt); });
+                const sy = document.getElementById('exportYear');
+                sy.innerHTML = ''; const cy = new Date().getFullYear(); for(let i=cy; i>=cy-2; i--) { const opt = document.createElement('option'); opt.value = i; opt.text = i; sy.appendChild(opt); }
+            },
+
+            processExport: function() {
+                const m = parseInt(document.getElementById('exportMonth').value);
+                const y = parseInt(document.getElementById('exportYear').value);
+                const mName = this.data.fullMonths[m];
+                const checks = this.data.checks.filter(c => parseInt(c.month) === m && parseInt(c.year) === y);
+                const moves = this.data.movements.filter(mv => { const d = new Date(mv.timestamp); return d.getMonth() === m && d.getFullYear() === y; });
+
+                let tableHTML = `<html><head><meta charset='UTF-8'></head><body><h2 style="text-align:center">LAPORAN BULANAN APAR - ${mName.toUpperCase()} ${y}</h2><h3 style="text-align:center">RS MARZOEKI MAHDI BOGOR</h3><br><h3>1. HASIL PEMERIKSAAN (INSPEKSI)</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #e2e8f0;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>LOKASI</th><th>JENIS</th><th>STATUS</th><th>KETERANGAN</th><th>PETUGAS</th></tr></thead><tbody>`;
+                
+                if(checks.length === 0) { tableHTML += `<tr><td colspan="7" style="text-align:center;">Tidak ada data inspeksi bulan ini.</td></tr>`; } else {
+                    checks.forEach(c => {
+                        const apar = this.data.apars.find(a => String(a.id) === String(c.aparId)); const kode = apar ? apar.kode : 'APAR Terhapus'; const loc = apar ? apar.lokasi : '-'; const jns = apar ? apar.jenis : '-'; const status = String(c.isGood) === 'true' ? 'BAIK' : 'RUSAK'; const color = String(c.isGood) === 'true' ? 'green' : 'red';
+                        tableHTML += `<tr><td>${new Date(c.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${loc}</td><td>${jns}</td><td style="color:${color}; font-weight:bold;">${status}</td><td>${c.notes}</td><td>${c.petugas}</td></tr>`;
+                    });
+                }
+                tableHTML += `</tbody></table><br><br><h3>2. RIWAYAT PERPINDAHAN APAR</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #fff7ed;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>DARI LOKASI</th><th>KE LOKASI</th><th>PETUGAS</th></tr></thead><tbody>`;
+                if(moves.length === 0) { tableHTML += `<tr><td colspan="5" style="text-align:center;">Tidak ada perpindahan bulan ini.</td></tr>`; } else {
+                    moves.forEach(mv => { const apar = this.data.apars.find(a => String(a.id) === String(mv.aparId)); const kode = apar ? apar.kode : 'APAR Terhapus'; tableHTML += `<tr><td>${new Date(mv.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${mv.oldLocation}</td><td>${mv.newLocation}</td><td>${mv.petugas}</td></tr>`; });
+                }
+                tableHTML += `</tbody></table></body></html>`;
+
+                const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Laporan_APAR_${mName}_${y}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); document.getElementById('exportModal').classList.add('hidden');
+            }
         };
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
 </html>
+
