@@ -723,7 +723,23 @@
                 
                 if(checks.length === 0) { tableHTML += `<tr><td colspan="7" style="text-align:center;">Tidak ada data inspeksi bulan ini.</td></tr>`; } else {
                     checks.forEach(c => {
-                        const apar = this.data.apars.find(a => String(a.id) === String(c.aparId)); const kode = apar ? apar.kode : 'APAR Terhapus'; const loc = apar ? apar.lokasi : '-'; const jns = apar ? apar.jenis : '-'; const status = String(c.isGood) === 'true' ? 'BAIK' : 'RUSAK'; const color = String(c.isGood) === 'true' ? 'green' : 'red';
+                        const apar = this.data.apars.find(a => String(a.id) === String(c.aparId)); 
+                        const kode = apar ? apar.kode : 'APAR Terhapus'; 
+                        const loc = apar ? apar.lokasi : '-'; 
+                        const jns = apar ? apar.jenis : '-'; 
+                        
+                        // REVISI LOGIKA STATUS EXCEL
+                        let status = 'RUSAK';
+                        let color = 'red';
+
+                        if (String(c.isGood) === 'true') {
+                            status = 'BAIK';
+                            color = 'green';
+                        } else if (c.notes && c.notes.includes('HARUS DIISI ULANG')) {
+                            status = 'HARUS DIISI ULANG';
+                            color = '#9333ea'; // Warna Ungu
+                        }
+
                         tableHTML += `<tr><td>${new Date(c.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${loc}</td><td>${jns}</td><td style="color:${color}; font-weight:bold;">${status}</td><td>${c.notes}</td><td>${c.petugas}</td></tr>`;
                     });
                 }
@@ -740,6 +756,7 @@
     </script>
 </body>
 </html>
+
 
 
 
