@@ -27,11 +27,26 @@
         .capturing .show-on-capture { display: block; }
         .capturing .no-print { display: none !important; }
         .capturing { border-radius: 0 !important; border: 1px solid #ddd; }
+        
+        /* Default: Admin Only disembunyikan jika Public Mode */
         body.public-mode .admin-only { display: none !important; }
+        
+        /* === MODE SCAN (QR CODE) === */
         body.scan-mode #sidebar { display: none !important; }
         body.scan-mode #top-header { display: none !important; }
         body.scan-mode #main-content { margin-left: 0 !important; width: 100% !important; padding-top: 0 !important; }
         body.scan-mode main { padding: 1rem !important; }
+
+        /* Sembunyikan Dashboard dan Tombol Kembali Utama saat Scan */
+        body.scan-mode #view-dashboard { display: none !important; }
+        body.scan-mode #backBtnDetail { display: none !important; } 
+        
+        /* PAKSA MENU APAR MUNCUL (Edit, Pindah, Cetak, Ceklis) TANPA LOGIN */
+        body.scan-mode #view-detail .admin-only { display: inline-flex !important; } 
+        body.scan-mode #view-detail #tindakLanjutContainer.admin-only { display: block !important; }
+        body.scan-mode #view-detail #btnChecklistNow.admin-only { display: flex !important; }
+        body.scan-mode #view-add-apar .admin-only { display: block !important; } /* Tombol save di form edit */
+
         .active-nav { background-color: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
         .inactive-nav { color: #64748b; }
         .inactive-nav:hover { background-color: #f8fafc; color: #334155; }
@@ -79,21 +94,7 @@
         <div class="absolute bottom-4 text-white/50 text-[10px]">Copyright ©2026 Instalasi K3KL All Rights Reserved</div>
     </div>
 
-    <div id="scan-choice-screen" class="hidden fixed inset-0 bg-gray-100 z-[90] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full fade-in text-center border-t-8 border-blue-600 relative overflow-hidden">
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-50 rounded-full blur-2xl"></div><div class="absolute -bottom-10 -left-10 w-32 h-32 bg-green-50 rounded-full blur-2xl"></div>
-            <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce shadow-inner"><i class="fa-solid fa-qrcode text-5xl text-blue-600"></i></div>
-            <h2 class="text-2xl font-extrabold text-gray-800 mb-2">APAR Terdeteksi!</h2><p class="text-sm text-gray-500 mb-8" id="scanChoiceKode">Silakan pilih menu akses anda:</p>
-            <button onclick="app.handleScanOption('inspect')" class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg mb-4 flex items-center gap-4 transition transform hover:scale-105 group">
-                <div class="bg-white/20 p-3 rounded-lg group-hover:bg-white/30 transition"><i class="fa-solid fa-user-shield text-2xl"></i></div>
-                <div class="text-left flex-1"><div class="text-[10px] uppercase text-blue-100 tracking-wider font-bold">Login Petugas</div><div class="text-lg leading-tight">INSPEKSI</div></div><i class="fa-solid fa-chevron-right text-blue-200"></i>
-            </button>
-            <button onclick="app.handleScanOption('history')" class="w-full bg-white border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 text-gray-700 font-bold py-4 px-6 rounded-xl shadow-sm flex items-center gap-4 transition transform hover:scale-105 group">
-                <div class="bg-gray-100 p-3 rounded-lg group-hover:bg-white transition"><i class="fa-solid fa-clock-rotate-left text-2xl text-gray-500 group-hover:text-blue-500"></i></div>
-                <div class="text-left flex-1"><div class="text-[10px] uppercase text-gray-400 tracking-wider font-bold group-hover:text-blue-400">Akses Publik</div><div class="text-lg leading-tight text-gray-800 group-hover:text-blue-700">LIHAT RIWAYAT</div></div><i class="fa-solid fa-chevron-right text-gray-300 group-hover:text-blue-300"></i>
-            </button>
-        </div>
-    </div>
+    <div id="scan-choice-screen" class="hidden"></div>
 
     <div id="main-app" class="hidden flex h-screen overflow-hidden bg-gray-100">
         
@@ -229,7 +230,7 @@
 
                 <div id="view-add-apar" class="view-section hidden fade-in max-w-2xl mx-auto">
                     <div class="bg-white p-8 rounded-2xl shadow-lg">
-                        <button onclick="app.navigate('dashboard')" class="mb-6 text-gray-400 hover:text-blue-600 text-sm font-bold flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali</button>
+                        <button onclick="app.handleEditBack()" class="mb-6 text-gray-400 hover:text-blue-600 text-sm font-bold flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali</button>
                         <h2 class="text-2xl font-black text-gray-800 mb-8 border-l-4 border-blue-600 pl-4" id="formTitle">Tambah APAR Baru</h2>
                         <form onsubmit="app.saveApar(event)" class="space-y-5">
                             <input type="hidden" id="editAparId"> 
@@ -244,14 +245,14 @@
                                 <div><label class="block text-gray-700 text-xs font-bold uppercase mb-2">Tanggal Kadaluarsa</label><input type="date" id="inputExpired" required class="w-full border-2 border-red-100 rounded-xl px-4 py-3 bg-red-50 text-red-800 font-bold focus:outline-none focus:border-red-500"></div>
                             </div>
                             <div class="pt-6 flex justify-end">
-                                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-blue-700 font-bold transition transform hover:-translate-y-0.5" id="btnSaveApar">SIMPAN DATA</button>
+                                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-blue-700 font-bold transition transform hover:-translate-y-0.5 admin-only" id="btnSaveApar">SIMPAN DATA</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
                 <div id="view-detail" class="view-section hidden fade-in max-w-xl mx-auto">
-                    <button onclick="app.navigate('dashboard')" class="admin-only mb-6 text-gray-400 hover:text-blue-600 font-bold text-sm flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali Dashboard</button>
+                    <button id="backBtnDetail" onclick="app.handleDetailBack()" class="mb-6 text-gray-400 hover:text-blue-600 font-bold text-sm flex items-center gap-2 transition"><div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></div> Kembali</button>
                     
                     <div id="captureArea" class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 print-area relative mb-8">
                         <div id="scanStatusBanner" class="hidden mb-8 p-6 rounded-xl text-center shadow-inner">
@@ -286,7 +287,7 @@
                             <h4 class="font-bold text-gray-800 mb-4 border-b pb-2 text-sm flex justify-between items-center">Riwayat Perpindahan</h4>
                             <div id="movementHistoryBody" class="space-y-2"><div class="text-xs text-gray-400 italic text-center py-4">Belum ada riwayat.</div></div>
                         </div>
-                        <div class="mt-8 text-center text-[10px] text-gray-300 show-on-capture block pt-4 border-t border-dashed">Sistem Monitoring APAR K3KL RSJMM Bogor @2026 - Generated by System</div>
+                        <div class="mt-8 text-center text-[10px] text-gray-300 show-on-capture block pt-4 border-t border-dashed">Sistem Monitoring APAR RSJMM Bogor - Generated by System</div>
                     </div>
                     
                     <div id="tindakLanjutContainer" class="hidden admin-only mt-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-900 p-5 rounded-xl shadow-sm no-print mb-6 relative overflow-hidden">
@@ -384,7 +385,7 @@
 
     <div id="editHistoryModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl"><h3 class="font-bold text-lg mb-4">Edit Catatan Riwayat</h3><input type="hidden" id="editHistoryIndex"><div class="mb-3"><label class="block text-xs font-bold mb-1">Status</label><select id="editHistoryStatus" class="w-full border p-2 rounded"><option value="true">BAIK</option><option value="false">RUSAK</option></select></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Catatan</label><textarea id="editHistoryNote" class="w-full border p-2 rounded h-20"></textarea></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('editHistoryModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.saveEditedHistory()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Update</button></div></div></div>
     <div id="moveAparModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-orange-500"><h3 class="font-bold text-lg mb-4 text-orange-600"><i class="fa-solid fa-truck-fast"></i> Pindahkan APAR</h3><div class="mb-3"><label class="block text-xs font-bold mb-1 text-gray-500">Lokasi Sekarang:</label><div id="moveCurrentLoc" class="font-bold text-sm bg-gray-100 p-2 rounded text-gray-700"></div></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Pindah ke Ruangan Baru:</label><input type="text" id="moveNewLoc" class="w-full border p-2 rounded font-bold" placeholder="Nama Ruangan Baru..."></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Petugas:</label><input type="text" id="movePetugas" class="w-full border p-2 rounded" placeholder="Nama Anda"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('moveAparModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitMove()" class="px-3 py-1 bg-orange-600 text-white rounded text-sm font-bold shadow">Simpan & Pindahkan</button></div></div></div>
-    <div id="tindakLanjutModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-yellow-500"><h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3><div class="mb-4"><label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label><textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke workshop untuk isi ulang/perbaikan seal..."></textarea></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Oleh:</label><input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Teknisi"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button></div></div></div>
+    <div id="tindakLanjutModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-yellow-500"><h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3><div class="mb-4"><label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label><textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke gudang kelig untuk isi ulang/perbaikan tabungnya..."></textarea></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Oleh:</label><input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Petugas"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button></div></div></div>
     <div id="labelPrintArea" class="hidden bg-white p-4 border border-gray-800 w-[300px] text-center mx-auto"><h2 class="text-lg font-bold uppercase mb-1 border-b border-black pb-1">KARTU INSPEKSI APAR</h2><h3 class="text-xs mb-2">RSJMM BOGOR</h3><div id="printQrContainer" class="flex justify-center my-2"></div><div class="text-xl font-black my-1" id="printLabelKode"></div><div class="text-sm italic" id="printLabelLokasi"></div><div class="text-[10px] mt-2 border-t pt-1">Scan untuk update status & cek riwayat</div></div><div id="printAllArea" class="hidden"></div>
 
     <script>
@@ -416,13 +417,19 @@
                     if (j.status === 'success') { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userRole', j.role); localStorage.setItem('petugasName', j.petugasName); localStorage.setItem('petugasId', u); 
                         if(j.photoUrl) localStorage.setItem('petugasPhoto', this.formatPhotoUrl(j.photoUrl)); else localStorage.removeItem('petugasPhoto'); 
                         if(j.petugasName) document.getElementById('inputPetugas').value = j.petugasName; document.getElementById('login-screen').classList.add('hidden');
-                        if (this.data.pendingScanAction === 'inspect' && this.data.pendingScanId) { if (this.data.apars.length === 0) { await this.fetchDataWithTimeout(); } this.data.pendingScanAction = null; document.getElementById('main-app').classList.remove('hidden'); this.showChecklistForm(this.data.pendingScanId); } else { this.init(); }
+                        
+                        // Jika Login dari Scan, masuk ke Detail Dulu
+                        if (this.data.pendingScanAction === 'inspect' && this.data.pendingScanId) { 
+                            if (this.data.apars.length === 0) { await this.fetchDataWithTimeout(); } 
+                            this.data.pendingScanAction = null; 
+                            document.getElementById('main-app').classList.remove('hidden'); 
+                            this.showDetail(this.data.pendingScanId); 
+                        } else { this.init(); }
                     } else { alert(j.message || 'Login Gagal!'); }
                 } catch (err) { console.error(err); alert('Login sukses.'); } finally { this.toggleLoading(false); }
             },
             cancelLogin: function() { document.getElementById('login-screen').classList.add('hidden'); const scanId = new URLSearchParams(window.location.search).get('id'); if (scanId) { document.getElementById('scan-choice-screen').classList.remove('hidden'); } else { document.getElementById('login-screen').classList.remove('hidden'); } },
             
-            // REVISI: Logika Logout dengan Modal Baru
             handleLogout: function() { 
                 document.getElementById('logoutModal').classList.remove('hidden');
             },
@@ -439,7 +446,44 @@
                 const urlParams = new URLSearchParams(window.location.search); const scanId = urlParams.get('id');
                 const localApars = localStorage.getItem('cached_apars'); const localChecks = localStorage.getItem('cached_checks');
                 if (localApars) { try { this.data.apars = JSON.parse(localApars); this.data.checks = JSON.parse(localChecks || "[]"); } catch(e) {} }
-                if (scanId) { document.getElementById('scan-choice-screen').classList.remove('hidden'); this.fetchDataWithTimeout(); return; }
+                
+                // --- LOGIKA UTAMA SCAN ID ---
+                if (scanId) { 
+                    // Set mode scanning
+                    document.body.classList.add('scan-mode');
+                    
+                    // Munculkan aplikasi utama agar tidak blank
+                    document.getElementById('main-app').classList.remove('hidden');
+
+                    // PAKSA KUNCI KE DETAIL VIEW SEBELUM DATA LOAD
+                    // Ini mencegah dashboard "berkedip" muncul
+                    document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden')); 
+                    document.getElementById('view-detail').classList.remove('hidden');
+
+                    // REVISI: LOGIKA CACHE-FIRST (AGAR CEPAT)
+                    const cachedApar = this.data.apars.find(a => String(a.id) === String(scanId));
+                    
+                    if (cachedApar) {
+                        // Jika data ada di cache, TAMPILKAN LANGSUNG!
+                        this.showDetail(scanId);
+                        
+                        // Lalu fetch data terbaru di background (tanpa loading spinner mengganggu)
+                        this.fetchDataWithTimeout().then(() => {
+                            // Update tampilan setelah data baru datang (opsional, jika ingin real-time)
+                            this.showDetail(scanId);
+                        });
+                    } else {
+                        // Jika tidak ada di cache, terpaksa loading
+                        this.toggleLoading(true, "Mengambil Data...");
+                        await this.fetchDataWithTimeout();
+                        this.toggleLoading(false);
+                        this.showDetail(scanId);
+                    }
+                    
+                    // Hentikan eksekusi di sini agar tidak redirect ke login screen
+                    return; 
+                }
+
                 if (!localStorage.getItem('isLoggedIn')) { document.getElementById('login-screen').classList.remove('hidden'); return; }
                 document.getElementById('login-screen').classList.add('hidden'); document.getElementById('main-app').classList.remove('hidden');
                 
@@ -456,10 +500,27 @@
                 this.setupFilters(); this.renderDashboard(); this.fetchDataWithTimeout();
             },
 
-            handleScanOption: function(choice) {
-                const scanId = new URLSearchParams(window.location.search).get('id'); document.getElementById('scan-choice-screen').classList.add('hidden'); document.body.classList.add('scan-mode');
-                if (choice === 'inspect') { if (localStorage.getItem('isLoggedIn')) { document.getElementById('main-app').classList.remove('hidden'); this.showChecklistForm(scanId); } else { this.data.pendingScanAction = 'inspect'; this.data.pendingScanId = scanId; document.getElementById('login-screen').classList.remove('hidden'); } } 
-                else if (choice === 'history') { document.body.classList.add('public-mode'); document.getElementById('main-app').classList.remove('hidden'); if(this.data.apars.length > 0) { this.showDetail(scanId); } else { this.toggleLoading(true, "Memuat Data..."); this.fetchDataWithTimeout().then(() => { this.toggleLoading(false); this.showDetail(scanId); }); } }
+            // REVISI BARU: Handle Back dari Edit Menu
+            handleEditBack: function() {
+                if (document.body.classList.contains('scan-mode')) {
+                    // Jika mode scan, kembali ke detail APAR (mengatasi layar blank)
+                    this.showDetail(this.data.currentDetailId);
+                } else {
+                    // Jika mode admin biasa, kembali ke dashboard
+                    this.navigate('dashboard');
+                }
+            },
+
+            handleScanOption: function(choice) { },
+
+            // REVISI: Logika Tombol Kembali di Detail
+            handleDetailBack: function() {
+                // Di mode scan, tombol ini sudah di-hidden via CSS (#backBtnDetail { display: none }),
+                // tapi sebagai fallback logic:
+                if (document.body.classList.contains('scan-mode')) {
+                     return; // Tidak melakukan apa-apa atau bisa reload page untuk reset
+                } 
+                this.navigate('dashboard');
             },
 
             fetchDataWithTimeout: async function() {
@@ -628,7 +689,32 @@
                 }); 
             },
 
-            showChecklistForm: function(id) { this.navigate('checklist'); document.getElementById('checkAparId').value = id; document.querySelectorAll('input[name="checkItem"]').forEach(c=>c.checked=true); document.getElementById('inputCheckDate').value = new Date().toISOString().split('T')[0]; document.getElementById('inputNotes').value=''; document.getElementById('inputPetugas').value= localStorage.getItem('petugasName') || ''; document.getElementById('evidencePhoto').value = ""; this.updateLiveStatus(); this.renderMiniHistory(id,'miniHistoryBody'); },
+            showChecklistForm: function(id) { 
+                this.navigate('checklist'); 
+                document.getElementById('checkAparId').value = id; 
+                document.querySelectorAll('input[name="checkItem"]').forEach(c=>c.checked=true); 
+                document.getElementById('inputCheckDate').value = new Date().toISOString().split('T')[0]; 
+                document.getElementById('inputNotes').value=''; 
+                
+                // REVISI INPUT PETUGAS:
+                const loggedUser = localStorage.getItem('petugasName');
+                const pInput = document.getElementById('inputPetugas');
+                if (loggedUser) {
+                    pInput.value = loggedUser;
+                    pInput.readOnly = true;
+                    pInput.classList.add('bg-gray-50');
+                } else {
+                    pInput.value = "";
+                    pInput.readOnly = false; // Boleh ngetik karena tidak login
+                    pInput.classList.remove('bg-gray-50');
+                    pInput.placeholder = "Masukkan Nama Petugas...";
+                    pInput.focus();
+                }
+
+                document.getElementById('evidencePhoto').value = ""; 
+                this.updateLiveStatus(); 
+                this.renderMiniHistory(id,'miniHistoryBody'); 
+            },
             backToDetail: function() { this.showDetail(document.getElementById('checkAparId').value); },
             openLocation: function(loc) { window.open(`https://www.google.com/maps/search/${encodeURIComponent(loc + " RSJMM Bogor")}`, '_blank'); },
             printAllLabels: function() { if(this.data.apars.length===0) return; const c = document.getElementById('printAllArea'); c.innerHTML=''; this.data.apars.forEach(a=>{ const d=document.createElement('div'); d.className='qr-card'; d.innerHTML=`<b>${a.kode}</b><div id="qr-${a.id}" style="display:flex;justify-content:center;margin:5px 0;"></div><small>${a.lokasi}</small>`; c.appendChild(d); new QRCode(d.querySelector(`#qr-${a.id}`), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:80, height:80}); }); document.body.classList.add('printing-all'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-all');},1000); },
@@ -687,7 +773,7 @@
                 const s = await this.sendData(cd); 
                 if(s) { 
                     this.showDetail(id); 
-                    if(allChecked) { this.showToast("Terima kasih!", "green"); } else { this.showToast("Tersimpan!", "red"); } 
+                    if(allChecked) { this.showToast("Terima kasih sudah rawat aku !", "green"); } else { this.showToast("Tersimpan!", "red"); } 
                 } 
             },
             
@@ -722,7 +808,7 @@
                 let tableHTML = `<html><head><meta charset='UTF-8'></head><body><h2 style="text-align:center">LAPORAN BULANAN APAR - ${mName.toUpperCase()} ${y}</h2><h3 style="text-align:center">RS MARZOEKI MAHDI BOGOR</h3><br><h3>1. HASIL PEMERIKSAAN (INSPEKSI)</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #e2e8f0;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>LOKASI</th><th>JENIS</th><th>STATUS</th><th>KETERANGAN</th><th>PETUGAS</th></tr></thead><tbody>`;
                 
                 if(checks.length === 0) { tableHTML += `<tr><td colspan="7" style="text-align:center;">Tidak ada data inspeksi bulan ini.</td></tr>`; } else {
-                    checks.forEach(c => {
+                   checks.forEach(c => {
                         const apar = this.data.apars.find(a => String(a.id) === String(c.aparId)); 
                         const kode = apar ? apar.kode : 'APAR Terhapus'; 
                         const loc = apar ? apar.lokasi : '-'; 
@@ -756,7 +842,3 @@
     </script>
 </body>
 </html>
-
-
-
-
