@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light"> 
     <title>Sistem Monitoring APAR - RSJMM Bogor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -28,7 +29,6 @@
         .capturing .no-print { display: none !important; }
         .capturing { border-radius: 0 !important; border: 1px solid #ddd; }
         
-        /* Default: Admin Only disembunyikan jika Public Mode */
         body.public-mode .admin-only { display: none !important; }
         
         /* === MODE SCAN (QR CODE) === */
@@ -36,22 +36,15 @@
         body.scan-mode #top-header { display: none !important; }
         body.scan-mode #main-content { margin-left: 0 !important; width: 100% !important; padding-top: 0 !important; }
         body.scan-mode main { padding: 1rem !important; }
-
-        /* Sembunyikan Dashboard dan Tombol Kembali Utama saat Scan */
         body.scan-mode #view-dashboard { display: none !important; }
         body.scan-mode #backBtnDetail { display: none !important; } 
-        
-        /* PAKSA MENU APAR MUNCUL (Edit, Pindah, Cetak, Ceklis) TANPA LOGIN */
         body.scan-mode #view-detail .admin-only { display: inline-flex !important; } 
         
-        /* === FIX KOTAK KUNING === 
-           CSS ini menjamin jika element memiliki class 'hidden', dia AKAN hilang
-           walaupun ada rule lain yang mencoba menampilkannya. */
+        /* === FIX KOTAK KUNING & MODAL === */
         #tindakLanjutContainer.hidden { display: none !important; }
-        
-        /* Tampilkan jika TIDAK ada class hidden saat mode scan */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        .modal.hidden { display: none !important; } 
         body.scan-mode #view-detail #tindakLanjutContainer.admin-only:not(.hidden) { display: block !important; }
-
         body.scan-mode #view-detail #btnChecklistNow.admin-only { display: flex !important; }
         body.scan-mode #view-add-apar .admin-only { display: block !important; } 
 
@@ -60,7 +53,6 @@
         .inactive-nav:hover { background-color: #f8fafc; color: #334155; }
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
         #toast-msg { display: none; transition: opacity 0.5s ease; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
         
         @media print { body * { visibility: hidden; } body.printing-label #labelPrintArea, body.printing-label #labelPrintArea * { visibility: visible; } body.printing-label #labelPrintArea { position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 20px; } body.printing-all #printAllArea, body.printing-all #printAllArea * { visibility: visible; } body.printing-all #printAllArea { position: absolute; left: 0; top: 0; width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; } .qr-card { border: 1px solid #000; padding: 10px; text-align: center; page-break-inside: avoid; } body:not(.printing-label):not(.printing-all) .no-print { display: none !important; } }
     </style>
@@ -122,6 +114,11 @@
             <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
                 <p class="px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Main Menu</p>
                 <button onclick="app.navigate('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition active-nav"><i class="fa-solid fa-house w-5 text-center"></i> Beranda</button>
+                
+                <button onclick="window.location.href='https://keslingk3.github.io/apkpelaporanujicoba/admin'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav text-left">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard Laporan K3
+                </button>
+                
                 <div class="admin-only space-y-2">
                     <button onclick="app.navigate('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-user-tie w-5 text-center"></i> Profil User</button>
                     <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan</button>
@@ -156,20 +153,45 @@
                 <div id="view-dashboard" class="view-section fade-in space-y-8">
                     <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-fire-extinguisher text-6xl text-blue-600"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Total APAR</div><div class="text-4xl font-black text-gray-800" id="statTotal">0</div><div class="mt-2 w-12 h-1 bg-blue-500 rounded-full"></div></div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-clipboard-check text-6xl text-yellow-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Sudah Dicek</div><div class="text-4xl font-black text-gray-800" id="statChecked">0</div><div class="mt-2 w-12 h-1 bg-yellow-500 rounded-full"></div></div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-circle-check text-6xl text-green-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Kondisi Baik</div><div class="text-4xl font-black text-green-600" id="statGood">0</div><div class="mt-2 w-12 h-1 bg-green-500 rounded-full"></div></div>
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-triangle-exclamation text-6xl text-red-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Rusak / Exp</div><div class="text-4xl font-black text-red-600" id="statBad">0</div><div class="mt-2 w-12 h-1 bg-red-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-clipboard-check text-6xl text-yellow-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Sudah Dicek (bulan ini)</div><div class="text-4xl font-black text-gray-800" id="statChecked">0</div><div class="mt-2 w-12 h-1 bg-yellow-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-circle-check text-6xl text-green-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Kondisi Baik (bulan ini)</div><div class="text-4xl font-black text-green-600" id="statGood">0</div><div class="mt-2 w-12 h-1 bg-green-500 rounded-full"></div></div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group"><div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition"><i class="fa-solid fa-triangle-exclamation text-6xl text-red-500"></i></div><div class="text-gray-400 text-xs font-bold uppercase mb-2 tracking-wider">Rusak / Exp (bulan ini)</div><div class="text-4xl font-black text-red-600" id="statBad">0</div><div class="mt-2 w-12 h-1 bg-red-500 rounded-full"></div></div>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
                         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
                             <h3 class="font-bold text-gray-800 mb-6 flex items-center text-lg"><span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-layer-group"></i></span> Rangkuman Jenis APAR</h3>
-                            <div class="grid grid-cols-4 gap-4 text-center">
+                            <div class="grid grid-cols-4 gap-4 text-center mb-8">
                                 <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Powder</div><div class="text-2xl font-black text-gray-800" id="countPowder">0</div></div>
                                 <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">CO2</div><div class="text-2xl font-black text-gray-800" id="countCo2">0</div></div>
                                 <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Foam</div><div class="text-2xl font-black text-gray-800" id="countFoam">0</div></div>
                                 <div class="bg-gray-50 rounded-xl p-4 hover:bg-blue-50 transition border border-transparent hover:border-blue-100"><div class="text-xs text-gray-500 font-bold uppercase mb-1">Clean Agent</div><div class="text-2xl font-black text-gray-800" id="countClean">0</div></div>
                             </div>
+                            
+                            <div class="border-t border-gray-100 pt-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-800 flex items-center text-sm uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-500"></i> Status Bermasalah (Terkini)</h4>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="bg-red-50 rounded-xl p-4 border border-red-100 text-center relative overflow-hidden">
+                                        <div class="text-[10px] text-red-500 font-bold uppercase mb-1">Expired</div>
+                                        <div class="text-3xl font-black text-red-700" id="countExpired">0</div>
+                                    </div>
+                                    <div class="bg-orange-50 rounded-xl p-4 border border-orange-100 text-center relative overflow-hidden">
+                                        <div class="text-[10px] text-orange-600 font-bold uppercase mb-1">Rusak Fisik</div>
+                                        <div class="text-3xl font-black text-orange-700" id="countRusak">0</div>
+                                    </div>
+                                    <div class="bg-purple-50 rounded-xl p-4 border border-purple-100 text-center relative overflow-hidden">
+                                        <div class="text-[10px] text-purple-600 font-bold uppercase mb-1">Isi Ulang</div>
+                                        <div class="text-3xl font-black text-purple-700" id="countRefill">0</div>
+                                    </div>
+                                </div>
+                                <button onclick="app.processProblemExport()" class="w-full mt-4 bg-gradient-to-r from-red-600 to-red-500 text-white py-3 rounded-lg shadow hover:shadow-lg hover:from-red-700 hover:to-red-600 transition text-xs font-bold flex justify-center items-center gap-2">
+                                    <i class="fa-solid fa-file-excel"></i> DOWNLOAD REKAP MASALAH
+                                </button>
+                            </div>
                         </div>
+
                         <div class="bg-white rounded-2xl shadow-sm p-6 border border-orange-100">
                             <h3 class="font-bold text-orange-800 mb-6 flex items-center text-lg"><span class="bg-orange-100 text-orange-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-truck-fast"></i></span> Perpindahan</h3>
                             <div id="dashboardMovements" class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
@@ -345,7 +367,7 @@
                             <div id="evidenceContainer" class="hidden mb-8 bg-red-50 p-6 rounded-2xl border-2 border-dashed border-red-300 text-center">
                                 <div class="mb-3 text-red-400 text-3xl"><i class="fa-solid fa-camera"></i></div>
                                 <label class="block text-red-800 text-sm font-bold mb-2 uppercase tracking-wide">Wajib Foto Bukti Kerusakan</label>
-                                <input type="file" id="evidencePhoto" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-white file:text-red-600 hover:file:bg-red-100 cursor-pointer">
+                                <input type="file" id="evidencePhoto" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-white file:text-red-600 hover:file:bg-red-100 cursor-pointer">
                             </div>
 
                             <div class="mb-8"><label class="block text-gray-500 text-xs font-bold uppercase mb-2">Catatan Tambahan</label><textarea id="inputNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 h-28 text-sm resize-none transition" placeholder="Tulis keterangan jika ada kerusakan..."></textarea></div>
@@ -359,7 +381,7 @@
     </div>
 
     <div id="exportModal" class="modal hidden">
-        <div class="bg-white p-6 rounded-xl w-96 shadow-2xl border-t-8 border-green-600">
+        <div class="bg-white p-6 rounded-xl w-[90%] max-w-sm shadow-2xl border-t-8 border-green-600 mx-4">
             <h3 class="font-bold text-xl mb-6 text-gray-800 flex items-center gap-2"><i class="fa-solid fa-file-excel text-green-600"></i> Export Laporan Bulanan</h3>
             <div class="space-y-4">
                 <div>
@@ -379,7 +401,7 @@
     </div>
 
     <div id="logoutModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-[90%] text-center relative overflow-hidden mx-4">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-pink-600"></div>
             <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 animate-pulse">
                 <i class="fa-solid fa-power-off text-3xl"></i>
@@ -393,9 +415,26 @@
         </div>
     </div>
 
-    <div id="editHistoryModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl"><h3 class="font-bold text-lg mb-4">Edit Catatan Riwayat</h3><input type="hidden" id="editHistoryIndex"><div class="mb-3"><label class="block text-xs font-bold mb-1">Status</label><select id="editHistoryStatus" class="w-full border p-2 rounded"><option value="true">BAIK</option><option value="false">RUSAK</option></select></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Catatan</label><textarea id="editHistoryNote" class="w-full border p-2 rounded h-20"></textarea></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('editHistoryModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.saveEditedHistory()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Update</button></div></div></div>
-    <div id="moveAparModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-orange-500"><h3 class="font-bold text-lg mb-4 text-orange-600"><i class="fa-solid fa-truck-fast"></i> Pindahkan APAR</h3><div class="mb-3"><label class="block text-xs font-bold mb-1 text-gray-500">Lokasi Sekarang:</label><div id="moveCurrentLoc" class="font-bold text-sm bg-gray-100 p-2 rounded text-gray-700"></div></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Pindah ke Ruangan Baru:</label><input type="text" id="moveNewLoc" class="w-full border p-2 rounded font-bold" placeholder="Nama Ruangan Baru..."></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Petugas:</label><input type="text" id="movePetugas" class="w-full border p-2 rounded" placeholder="Nama Anda"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('moveAparModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitMove()" class="px-3 py-1 bg-orange-600 text-white rounded text-sm font-bold shadow">Simpan & Pindahkan</button></div></div></div>
-    <div id="tindakLanjutModal" class="modal hidden"><div class="bg-white p-6 rounded-lg w-96 shadow-xl border-t-4 border-yellow-500"><h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3><div class="mb-4"><label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label><textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke gudang kesling untuk isi ulang/perbaikan ..."></textarea></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Oleh:</label><input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Petugas"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button></div></div></div>
+    <div id="editHistoryModal" class="modal hidden">
+        <div class="bg-white p-6 rounded-lg w-[90%] max-w-sm shadow-xl mx-4">
+            <h3 class="font-bold text-lg mb-4">Edit Catatan Riwayat</h3><input type="hidden" id="editHistoryIndex"><div class="mb-3"><label class="block text-xs font-bold mb-1">Status</label><select id="editHistoryStatus" class="w-full border p-2 rounded"><option value="true">BAIK</option><option value="false">RUSAK</option></select></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Catatan</label><textarea id="editHistoryNote" class="w-full border p-2 rounded h-20"></textarea></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('editHistoryModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.saveEditedHistory()" class="px-3 py-1 bg-blue-600 text-white rounded text-sm font-bold">Update</button></div>
+        </div>
+    </div>
+    <div id="moveAparModal" class="modal hidden">
+        <div class="bg-white p-6 rounded-lg w-[90%] max-w-sm shadow-xl border-t-4 border-orange-500 mx-4">
+            <h3 class="font-bold text-lg mb-4 text-orange-600"><i class="fa-solid fa-truck-fast"></i> Pindahkan APAR</h3><div class="mb-3"><label class="block text-xs font-bold mb-1 text-gray-500">Lokasi Sekarang:</label><div id="moveCurrentLoc" class="font-bold text-sm bg-gray-100 p-2 rounded text-gray-700"></div></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Pindah ke Ruangan Baru:</label><input type="text" id="moveNewLoc" class="w-full border p-2 rounded font-bold" placeholder="Nama Ruangan Baru..."></div><div class="mb-4"><label class="block text-xs font-bold mb-1">Petugas:</label><input type="text" id="movePetugas" class="w-full border p-2 rounded" placeholder="Nama Anda"></div><div class="flex justify-end gap-2"><button onclick="document.getElementById('moveAparModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitMove()" class="px-3 py-1 bg-orange-600 text-white rounded text-sm font-bold shadow">Simpan & Pindahkan</button></div>
+        </div>
+    </div>
+    
+    <div id="tindakLanjutModal" class="modal hidden">
+        <div class="bg-white p-6 rounded-lg w-[90%] max-w-sm shadow-xl border-t-4 border-yellow-500 mx-4">
+            <h3 class="font-bold text-lg mb-4 text-yellow-700"><i class="fa-solid fa-wrench"></i> Tindak Lanjut Perbaikan</h3>
+            <div class="mb-4"><label class="block text-xs font-bold mb-1">Tindakan yang dilakukan:</label><textarea id="tlNote" class="w-full border p-2 rounded h-24" placeholder="Cth: APAR dibawa ke gudang kesling untuk isi ulang/perbaikan ..."></textarea></div>
+            <div class="mb-4"><label class="block text-xs font-bold mb-1">Oleh:</label><input type="text" id="tlPetugas" class="w-full border p-2 rounded" placeholder="Nama Petugas"></div>
+            <div class="flex justify-end gap-2"><button onclick="document.getElementById('tindakLanjutModal').classList.add('hidden')" class="px-3 py-1 bg-gray-200 rounded text-sm">Batal</button><button onclick="app.submitTindakLanjut()" class="px-3 py-1 bg-green-600 text-white rounded text-sm font-bold">Simpan & Ubah Jadi Baik</button></div>
+        </div>
+    </div>
+    
     <div id="labelPrintArea" class="hidden bg-white p-4 border border-gray-800 w-[300px] text-center mx-auto"><h2 class="text-lg font-bold uppercase mb-1 border-b border-black pb-1">KARTU INSPEKSI APAR</h2><h3 class="text-xs mb-2">RSJMM BOGOR</h3><div id="printQrContainer" class="flex justify-center my-2"></div><div class="text-xl font-black my-1" id="printLabelKode"></div><div class="text-sm italic" id="printLabelLokasi"></div><div class="text-[10px] mt-2 border-t pt-1">Scan untuk update status & cek riwayat</div></div><div id="printAllArea" class="hidden"></div>
 
     <script>
@@ -459,38 +498,21 @@
                 
                 // --- LOGIKA UTAMA SCAN ID ---
                 if (scanId) { 
-                    // Set mode scanning
                     document.body.classList.add('scan-mode');
-                    
-                    // Munculkan aplikasi utama agar tidak blank
                     document.getElementById('main-app').classList.remove('hidden');
-
-                    // PAKSA KUNCI KE DETAIL VIEW SEBELUM DATA LOAD
-                    // Ini mencegah dashboard "berkedip" muncul
                     document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden')); 
                     document.getElementById('view-detail').classList.remove('hidden');
 
-                    // REVISI: LOGIKA CACHE-FIRST (AGAR CEPAT)
                     const cachedApar = this.data.apars.find(a => String(a.id) === String(scanId));
-                    
                     if (cachedApar) {
-                        // Jika data ada di cache, TAMPILKAN LANGSUNG!
                         this.showDetail(scanId);
-                        
-                        // Lalu fetch data terbaru di background (tanpa loading spinner mengganggu)
-                        this.fetchDataWithTimeout().then(() => {
-                            // Update tampilan setelah data baru datang (opsional, jika ingin real-time)
-                            this.showDetail(scanId);
-                        });
+                        this.fetchDataWithTimeout().then(() => { this.showDetail(scanId); });
                     } else {
-                        // Jika tidak ada di cache, terpaksa loading
                         this.toggleLoading(true, "Mengambil Data...");
                         await this.fetchDataWithTimeout();
                         this.toggleLoading(false);
                         this.showDetail(scanId);
                     }
-                    
-                    // Hentikan eksekusi di sini agar tidak redirect ke login screen
                     return; 
                 }
 
@@ -510,26 +532,12 @@
                 this.setupFilters(); this.renderDashboard(); this.fetchDataWithTimeout();
             },
 
-            // REVISI BARU: Handle Back dari Edit Menu
             handleEditBack: function() {
-                if (document.body.classList.contains('scan-mode')) {
-                    // Jika mode scan, kembali ke detail APAR (mengatasi layar blank)
-                    this.showDetail(this.data.currentDetailId);
-                } else {
-                    // Jika mode admin biasa, kembali ke dashboard
-                    this.navigate('dashboard');
-                }
+                if (document.body.classList.contains('scan-mode')) { this.showDetail(this.data.currentDetailId); } else { this.navigate('dashboard'); }
             },
 
-            handleScanOption: function(choice) { },
-
-            // REVISI: Logika Tombol Kembali di Detail
             handleDetailBack: function() {
-                // Di mode scan, tombol ini sudah di-hidden via CSS (#backBtnDetail { display: none }),
-                // tapi sebagai fallback logic:
-                if (document.body.classList.contains('scan-mode')) {
-                     return; // Tidak melakukan apa-apa atau bisa reload page untuk reset
-                } 
+                if (document.body.classList.contains('scan-mode')) { return; } 
                 this.navigate('dashboard');
             },
 
@@ -537,20 +545,7 @@
                 try { const r = await fetch(API_URL + "?action=getData"); const j = await r.json(); this.data.apars = j.apars || []; this.data.checks = j.checks || []; this.data.movements = j.movements || []; localStorage.setItem('cached_apars', JSON.stringify(this.data.apars)); localStorage.setItem('cached_checks', JSON.stringify(this.data.checks)); this.renderDashboard(); document.getElementById('statusOnlineBadge').innerText = "ONLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top"; this.checkNotifications(); } catch (err) { console.error("Fetch Error:", err); document.getElementById('statusOnlineBadge').innerText = "OFFLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-gray-500 text-white px-1 py-0.5 rounded align-top"; }
             },
             sendData: async function(p) {
-                // REVISI: Tidak ada loading screen yang memblokir
-                try { 
-                    const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(p) }); 
-                    const j = await r.json(); 
-                    if(j.status === 'success') { 
-                        // Sukses background
-                        return true; 
-                    } else { 
-                        throw new Error(j.message); 
-                    } 
-                } catch (err) { 
-                    this.saveToOfflineQueue(p); 
-                    return true; // Anggap sukses masuk antrean
-                }
+                try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(p) }); const j = await r.json(); if(j.status === 'success') { return true; } else { throw new Error(j.message); } } catch (err) { this.saveToOfflineQueue(p); return true; }
             },
             saveToOfflineQueue: function(p) { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); q.push(p); localStorage.setItem('offlineQueue', JSON.stringify(q)); },
             updateSyncButton: function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); const b = document.getElementById('btnSync'); const c = document.getElementById('syncCount'); if (q.length > 0 && navigator.onLine) { b.classList.remove('hidden'); c.innerText = q.length; } else { b.classList.add('hidden'); } },
@@ -579,16 +574,38 @@
                 });
                 
                 let sTotal=fApars.length, sChecked=0, sGood=0, sBad=0, cPow=0, cCo2=0, cFoam=0, cClean=0;
+                let cExp = 0, cRusak = 0, cRefill = 0; // COUNTER BARU
+
                 fApars.forEach(a => {
                     const j = (a.jenis || '').toLowerCase(); if(j.includes('powder')) cPow++; else if(j.includes('co2')) cCo2++; else if(j.includes('foam')) cFoam++; else cClean++;
                     let tC;
                     if(sMonth !== "") { tC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); if(tC) sChecked++; } 
                     else { const curC = this.data.checks.find(c => String(c.aparId) === String(a.id) && c.year == new Date().getFullYear() && c.month == new Date().getMonth()); if(curC) sChecked++; tC = this.getLastCheck(a.id); }
                     if(tC) { String(tC.isGood)==='true' ? sGood++ : sBad++; }
+
+                    // LOGIKA BARU: HITUNG EXPIRED, RUSAK FISIK, ISI ULANG
+                    // 1. Cek Expired
+                    if (new Date(a.expiredDate) < new Date()) { cExp++; }
+
+                    // 2. Cek Status Terkini (Rusak/Isi Ulang) berdasarkan inspeksi terakhir
+                    const lastC = this.getLastCheck(a.id);
+                    if (lastC && String(lastC.isGood) === 'false') {
+                         if (lastC.notes && lastC.notes.includes('HARUS DIISI ULANG')) {
+                             cRefill++;
+                         } else {
+                             cRusak++; // Rusak Fisik biasa
+                         }
+                    }
                 });
 
                 document.getElementById('statTotal').innerText = sTotal; document.getElementById('statChecked').innerText = sChecked; document.getElementById('statGood').innerText = sGood; document.getElementById('statBad').innerText = sBad;
                 document.getElementById('countPowder').innerText = cPow; document.getElementById('countCo2').innerText = cCo2; document.getElementById('countFoam').innerText = cFoam; document.getElementById('countClean').innerText = cClean;
+                
+                // UPDATE STATISTIK BARU DI DASHBOARD
+                document.getElementById('countExpired').innerText = cExp;
+                document.getElementById('countRusak').innerText = cRusak;
+                document.getElementById('countRefill').innerText = cRefill;
+
                 this.renderDashboardMovements();
 
                 const tP = Math.ceil(fApars.length / this.data.itemsPerPage);
@@ -677,17 +694,13 @@
                 const lC = this.getLastCheck(id); const sB = document.getElementById('scanStatusBanner'); const tL = document.getElementById('tindakLanjutContainer'); const iE = new Date(apar.expiredDate) < new Date();
                 this.renderMiniHistory(id, 'detailHistoryBody'); this.renderMovementHistory(id); sB.classList.remove('hidden');
                 
-                // REVISI LOGIKA TINDAK LANJUT (FORCE STYLE):
                 if (lC) { 
                     const isG = String(lC.isGood).toLowerCase() === 'true'; 
                     if (isG) { 
                         sB.className = "mb-6 p-4 rounded-lg text-center bg-green-100 border border-green-300"; 
                         document.getElementById('scanStatusText').className = "text-2xl font-black text-green-700"; 
                         document.getElementById('scanStatusText').innerHTML = 'KONDISI BAIK <i class="fa-solid fa-circle-check"></i>'; 
-                        
-                        // FIX: Force hide dengan inline style priority
-                        tL.classList.add('hidden'); 
-                        tL.style.setProperty('display', 'none', 'important');
+                        tL.classList.add('hidden'); tL.style.setProperty('display', 'none', 'important');
                     } else { 
                         if (lC.notes && lC.notes.includes('HARUS DIISI ULANG')) { 
                             sB.className = "mb-6 p-4 rounded-lg text-center bg-purple-100 border border-purple-300 animate-pulse"; 
@@ -698,19 +711,13 @@
                             document.getElementById('scanStatusText').className = "text-2xl font-black text-red-700"; 
                             document.getElementById('scanStatusText').innerHTML = 'KONDISI RUSAK <i class="fa-solid fa-circle-xmark"></i>'; 
                         } 
-                        
-                        // FIX: Force show jika rusak
-                        tL.classList.remove('hidden'); 
-                        tL.style.display = 'block';
+                        tL.classList.remove('hidden'); tL.style.display = 'block';
                     } 
                     document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + new Date(lC.timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
                 } else { 
                     sB.className = "mb-6 p-4 rounded-lg text-center bg-gray-100 border border-gray-300"; 
                     document.getElementById('scanStatusText').innerHTML = "BELUM ADA DATA"; 
-                    
-                    // FIX: Force hide jika belum ada data
-                    tL.classList.add('hidden'); 
-                    tL.style.setProperty('display', 'none', 'important');
+                    tL.classList.add('hidden'); tL.style.setProperty('display', 'none', 'important');
                 }
             },
 
@@ -751,19 +758,12 @@
                 document.getElementById('inputCheckDate').value = new Date().toISOString().split('T')[0]; 
                 document.getElementById('inputNotes').value=''; 
                 
-                // REVISI INPUT PETUGAS:
                 const loggedUser = localStorage.getItem('petugasName');
                 const pInput = document.getElementById('inputPetugas');
                 if (loggedUser) {
-                    pInput.value = loggedUser;
-                    pInput.readOnly = true;
-                    pInput.classList.add('bg-gray-50');
+                    pInput.value = loggedUser; pInput.readOnly = true; pInput.classList.add('bg-gray-50');
                 } else {
-                    pInput.value = "";
-                    pInput.readOnly = false; // Boleh ngetik karena tidak login
-                    pInput.classList.remove('bg-gray-50');
-                    pInput.placeholder = "Masukkan Nama Petugas...";
-                    pInput.focus();
+                    pInput.value = ""; pInput.readOnly = false; pInput.classList.remove('bg-gray-50'); pInput.placeholder = "Masukkan Nama Petugas..."; pInput.focus();
                 }
 
                 document.getElementById('evidencePhoto').value = ""; 
@@ -776,89 +776,30 @@
             printLabel: function(id) { const a=this.data.apars.find(x=>String(x.id)==String(id)); if(!a)return; document.getElementById('printLabelKode').innerText=a.kode; document.getElementById('printLabelLokasi').innerText=a.lokasi; document.getElementById('printQrContainer').innerHTML=''; new QRCode(document.getElementById('printQrContainer'), {text:`${window.location.href.split('?')[0]}?id=${a.id}`, width:120, height:120}); document.body.classList.add('printing-label'); setTimeout(()=>{window.print(); document.body.classList.remove('printing-label');},500); },
             shareStatus: async function() { const el=document.getElementById('captureArea'); el.classList.add('capturing'); try { const cvs = await html2canvas(el, {scale:2}); const win = window.open(''); win.document.write(`<img src="${cvs.toDataURL()}">`); setTimeout(()=>win.print(),500); el.classList.remove('capturing'); } catch(e){alert('Gagal Print'); el.classList.remove('capturing');}},
             
-            // REVISI: Kompresi Gambar Lebih Agresif (30%) untuk Speed
             compressImage: function(file) { 
                 return new Promise((resolve) => { 
-                    const reader = new FileReader(); 
-                    reader.readAsDataURL(file); 
-                    reader.onload = (event) => { 
-                        const img = new Image(); 
-                        img.src = event.target.result; 
-                        img.onload = () => { 
-                            const canvas = document.createElement('canvas'); 
-                            const maxWidth = 480; 
-                            const scaleSize = maxWidth / img.width; 
-                            canvas.width = maxWidth; 
-                            canvas.height = img.height * scaleSize; 
-                            const ctx = canvas.getContext('2d'); 
-                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-                            resolve(canvas.toDataURL('image/jpeg', 0.3)); 
-                        } 
-                    } 
+                    const reader = new FileReader(); reader.readAsDataURL(file); 
+                    reader.onload = (event) => { const img = new Image(); img.src = event.target.result; img.onload = () => { const canvas = document.createElement('canvas'); const maxWidth = 480; const scaleSize = maxWidth / img.width; canvas.width = maxWidth; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.3)); } } 
                 }); 
             },
             
             submitChecklist: async function(e) { 
-                e.preventDefault(); 
-                const id = document.getElementById('checkAparId').value; 
-                if (!id) return alert("Error: ID APAR tidak terbaca."); 
-                
-                let allChecked = true; 
-                let checklistText = "";
-                let uncheckedItems = [];
+                e.preventDefault(); const id = document.getElementById('checkAparId').value; if (!id) return alert("Error: ID APAR tidak terbaca."); 
+                let allChecked = true; let checklistText = ""; let uncheckedItems = [];
                 const itemLabels = ["Nozzle", "Pin", "Segel", "Selang", "Tekanan", "Body", "Hanger", "Isi"];
-                
                 const checks = document.querySelectorAll('input[name="checkItem"]'); 
-                checks.forEach((cb, index) => { 
-                    if (!cb.checked) {
-                        allChecked = false; 
-                        uncheckedItems.push(itemLabels[index]);
-                    }
-                }); 
-                
-                if(allChecked) {
-                    checklistText = "Nozzle/Corong, Pin pengaman, Segel Utuh, Selang (Hose), Tekanan, Body Tabung, Hanger /Dudukan, Isi --> Semua Item Bagus & Berfungsi.";
-                } else {
-                    checklistText = "Item Bermasalah (Tidak Diceklis): " + uncheckedItems.join(", ");
-                }
-
-                const tj = !checks[4].checked; // Tekanan
-                const ib = !checks[7].checked; // Isi
-                let anp = ""; 
-                
-                if (tj || ib) { 
-                    anp = "[HARUS DIISI ULANG] "; 
-                } else if (!allChecked) {
-                    anp = "[RUSAK] ";
-                }
-
+                checks.forEach((cb, index) => { if (!cb.checked) { allChecked = false; uncheckedItems.push(itemLabels[index]); } }); 
+                if(allChecked) { checklistText = "Nozzle/Corong, Pin pengaman, Segel Utuh, Selang (Hose), Tekanan, Body Tabung, Hanger /Dudukan, Isi --> Semua Item Bagus & Berfungsi."; } else { checklistText = "Item Bermasalah (Tidak Diceklis): " + uncheckedItems.join(", "); }
+                const tj = !checks[4].checked; const ib = !checks[7].checked; let anp = ""; 
+                if (tj || ib) { anp = "[HARUS DIISI ULANG] "; } else if (!allChecked) { anp = "[RUSAK] "; }
                 let img = ""; 
-                if (!allChecked) { 
-                    const fi = document.getElementById('evidencePhoto'); 
-                    if (fi.files.length === 0) { alert("WAJIB Upload Foto Bukti!"); return; } 
-                    this.toggleLoading(true, "Mengompres Foto..."); 
-                    img = await this.compressImage(fi.files[0]); 
-                    this.toggleLoading(false); 
-                    anp += "[FOTO TERLAMPIR] "; 
-                } 
-                
+                if (!allChecked) { const fi = document.getElementById('evidencePhoto'); if (fi.files.length === 0) { alert("WAJIB Upload Foto Bukti!"); return; } this.toggleLoading(true, "Mengompres Foto..."); img = await this.compressImage(fi.files[0]); this.toggleLoading(false); anp += "[FOTO TERLAMPIR] "; } 
                 const un = document.getElementById('inputNotes').value.trim(); 
                 let fn = anp + checklistText + (un ? " | Catatan: " + un : ""); 
-                
-                // REVISI: PENYIMPANAN LATAR BELAKANG (OPTIMISTIC UI)
                 const cd = { action: "addCheck", aparId: id, year: new Date(document.getElementById('inputCheckDate').value).getFullYear(), month: new Date(document.getElementById('inputCheckDate').value).getMonth(), timestamp: new Date(document.getElementById('inputCheckDate').value).toISOString(), isGood: allChecked, notes: fn, petugas: document.getElementById('inputPetugas').value.trim(), imageData: img }; 
-                
-                // 1. Tampilkan Animasi Sukses Langsung
                 if(allChecked) { this.showToast("Tersimpan!", "green"); } else { this.showToast("Tersimpan!", "red"); }
-                
-                // 2. Simpan ke array lokal dulu agar UI update seketika
-                this.data.checks.push(cd);
-                this.showDetail(id);
-
-                // 3. Kirim data ke server di background (tanpa await/loading spinner)
-                this.sendData(cd).catch(err => {
-                    console.error("Background sync failed, saving to offline queue");
-                });
+                this.data.checks.push(cd); this.showDetail(id);
+                this.sendData(cd).catch(err => { console.error("Background sync failed, saving to offline queue"); });
             },
             
             editHistory: function(id, ts) { const c = this.data.checks.find(x => String(x.aparId) == String(id) && x.timestamp == ts); if(c) { this.data.historyToEdit = c; document.getElementById('editHistoryStatus').value = c.isGood; document.getElementById('editHistoryNote').value = c.notes; document.getElementById('editHistoryModal').classList.remove('hidden'); } },
@@ -882,44 +823,149 @@
                 sy.innerHTML = ''; const cy = new Date().getFullYear(); for(let i=cy; i>=cy-2; i--) { const opt = document.createElement('option'); opt.value = i; opt.text = i; sy.appendChild(opt); }
             },
 
+            // --- REVISI: EXPORT EXCEL DENGAN LINK MENGARAH KE DETAIL APLIKASI ---
             processExport: function() {
                 const m = parseInt(document.getElementById('exportMonth').value);
                 const y = parseInt(document.getElementById('exportYear').value);
                 const mName = this.data.fullMonths[m];
-                const checks = this.data.checks.filter(c => parseInt(c.month) === m && parseInt(c.year) === y);
                 const moves = this.data.movements.filter(mv => { const d = new Date(mv.timestamp); return d.getMonth() === m && d.getFullYear() === y; });
 
-                let tableHTML = `<html><head><meta charset='UTF-8'></head><body><h2 style="text-align:center">LAPORAN BULANAN APAR - ${mName.toUpperCase()} ${y}</h2><h3 style="text-align:center">RS MARZOEKI MAHDI BOGOR</h3><br><h3>1. HASIL PEMERIKSAAN (INSPEKSI)</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #e2e8f0;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>LOKASI</th><th>JENIS</th><th>STATUS</th><th>KETERANGAN</th><th>PETUGAS</th></tr></thead><tbody>`;
+                let tableHTML = `<html><head><meta charset='UTF-8'></head><body><h2 style="text-align:center">LAPORAN BULANAN APAR - ${mName.toUpperCase()} ${y}</h2><h3 style="text-align:center">RS MARZOEKI MAHDI BOGOR</h3><br><h3>1. HASIL PEMERIKSAAN (INSPEKSI)</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #e2e8f0;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>LOKASI</th><th>JENIS</th><th>STATUS</th><th>KETERANGAN</th><th>PETUGAS</th><th>DOKUMENTASI</th></tr></thead><tbody>`;
                 
-                if(checks.length === 0) { tableHTML += `<tr><td colspan="7" style="text-align:center;">Tidak ada data inspeksi bulan ini.</td></tr>`; } else {
-                   checks.forEach(c => {
-                        const apar = this.data.apars.find(a => String(a.id) === String(c.aparId)); 
-                        const kode = apar ? apar.kode : 'APAR Terhapus'; 
-                        const loc = apar ? apar.lokasi : '-'; 
-                        const jns = apar ? apar.jenis : '-'; 
+                if (this.data.apars.length === 0) { 
+                    tableHTML += `<tr><td colspan="8" style="text-align:center;">Tidak ada data APAR.</td></tr>`; 
+                } else {
+                    this.data.apars.forEach(apar => {
+                        // Cari apakah APAR ini dicek pada bulan & tahun yang dipilih
+                        const c = this.data.checks.find(chk => String(chk.aparId) === String(apar.id) && parseInt(chk.month) === m && parseInt(chk.year) === y);
                         
-                        // REVISI LOGIKA STATUS EXCEL
-                        let status = 'RUSAK';
-                        let color = 'red';
+                        const kode = apar.kode || '-'; 
+                        const loc = apar.lokasi || '-'; 
+                        const jns = apar.jenis || '-'; 
+                        
+                        let tgl = '-';
+                        let status = 'BELUM CEK'; 
+                        let color = 'gray';
+                        let notes = '-';
+                        let petugas = '-';
+                        let fotoHtml = '-';
 
-                        if (String(c.isGood) === 'true') {
-                            status = 'BAIK';
-                            color = 'green';
-                        } else if (c.notes && c.notes.includes('HARUS DIISI ULANG')) {
-                            status = 'HARUS DIISI ULANG';
-                            color = '#9333ea'; // Warna Ungu
+                        if (c) {
+                            tgl = new Date(c.timestamp).toLocaleDateString('id-ID');
+                            notes = c.notes || '-';
+                            petugas = c.petugas || '-';
+                            
+                            if (String(c.isGood) === 'true') { 
+                                status = 'BAIK'; color = 'green'; 
+                            } else if (c.notes && c.notes.includes('HARUS DIISI ULANG')) { 
+                                status = 'HARUS DIISI ULANG'; color = '#9333ea'; 
+                            } else {
+                                status = 'RUSAK'; color = 'red';
+                            }
+
+                            // JIKA ADA FOTO, BUAT LINK MENGARAH KE APLIKASI WEB
+                            if (c.imageData && c.imageData.trim() !== '') {
+                                const detailUrl = window.location.href.split('?')[0] + '?id=' + apar.id;
+                                fotoHtml = `<a href="${detailUrl}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">Lihat di Aplikasi</a>`;
+                            }
                         }
-
-                        tableHTML += `<tr><td>${new Date(c.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${loc}</td><td>${jns}</td><td style="color:${color}; font-weight:bold;">${status}</td><td>${c.notes}</td><td>${c.petugas}</td></tr>`;
+                        
+                        tableHTML += `<tr><td>${tgl}</td><td>${kode}</td><td>${loc}</td><td>${jns}</td><td style="color:${color}; font-weight:bold;">${status}</td><td>${notes}</td><td>${petugas}</td><td style="text-align:center;">${fotoHtml}</td></tr>`;
                     });
                 }
+                
                 tableHTML += `</tbody></table><br><br><h3>2. RIWAYAT PERPINDAHAN APAR</h3><table border="1" style="border-collapse: collapse; width: 100%;"><thead style="background-color: #fff7ed;"><tr><th>TANGGAL</th><th>KODE APAR</th><th>DARI LOKASI</th><th>KE LOKASI</th><th>PETUGAS</th></tr></thead><tbody>`;
-                if(moves.length === 0) { tableHTML += `<tr><td colspan="5" style="text-align:center;">Tidak ada perpindahan bulan ini.</td></tr>`; } else {
-                    moves.forEach(mv => { const apar = this.data.apars.find(a => String(a.id) === String(mv.aparId)); const kode = apar ? apar.kode : 'APAR Terhapus'; tableHTML += `<tr><td>${new Date(mv.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${mv.oldLocation}</td><td>${mv.newLocation}</td><td>${mv.petugas}</td></tr>`; });
+                if(moves.length === 0) { 
+                    tableHTML += `<tr><td colspan="5" style="text-align:center;">Tidak ada perpindahan bulan ini.</td></tr>`; 
+                } else {
+                    moves.forEach(mv => { 
+                        const apar = this.data.apars.find(a => String(a.id) === String(mv.aparId)); 
+                        const kode = apar ? apar.kode : 'APAR Terhapus'; 
+                        tableHTML += `<tr><td>${new Date(mv.timestamp).toLocaleDateString('id-ID')}</td><td>${kode}</td><td>${mv.oldLocation}</td><td>${mv.newLocation}</td><td>${mv.petugas}</td></tr>`; 
+                    });
                 }
                 tableHTML += `</tbody></table></body></html>`;
+                
+                const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' }); 
+                const url = window.URL.createObjectURL(blob); 
+                const a = document.createElement('a'); 
+                a.href = url; 
+                a.download = `Laporan_APAR_${mName}_${y}.xls`; 
+                document.body.appendChild(a); 
+                a.click(); 
+                document.body.removeChild(a); 
+                document.getElementById('exportModal').classList.add('hidden');
+            },
 
-                const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Laporan_APAR_${mName}_${y}.xls`; document.body.appendChild(a); a.click(); document.body.removeChild(a); document.getElementById('exportModal').classList.add('hidden');
+            // --- FUNGSI EXPORT BARU UNTUK REKAPAN MASALAH ---
+            processProblemExport: function() {
+                const now = new Date();
+                const problemApars = [];
+
+                this.data.apars.forEach(a => {
+                    let issue = [];
+                    // 1. Cek Expired
+                    if (new Date(a.expiredDate) < now) { issue.push("EXPIRED"); }
+
+                    // 2. Cek Status Terkini (Rusak/Refill)
+                    const lastC = this.getLastCheck(a.id);
+                    if (lastC && String(lastC.isGood) === 'false') {
+                        if (lastC.notes && lastC.notes.includes('HARUS DIISI ULANG')) { issue.push("HARUS DIISI ULANG"); }
+                        else { issue.push("RUSAK FISIK"); }
+                    }
+
+                    if (issue.length > 0) {
+                        problemApars.push({
+                            kode: a.kode,
+                            lokasi: a.lokasi,
+                            jenis: a.jenis,
+                            expired: new Date(a.expiredDate).toLocaleDateString('id-ID'),
+                            status: issue.join(" & "),
+                            notes: lastC ? lastC.notes : '-'
+                        });
+                    }
+                });
+
+                if (problemApars.length === 0) return alert("Semua APAR dalam kondisi baik! Tidak ada data untuk didownload.");
+
+                let tableHTML = `<html><head><meta charset='UTF-8'></head><body>
+                    <h2 style="text-align:center; color:red;">REKAPITULASI APAR BERMASALAH</h2>
+                    <h3 style="text-align:center">RS MARZOEKI MAHDI BOGOR - Per Tanggal ${now.toLocaleDateString('id-ID')}</h3>
+                    <br>
+                    <table border="1" style="border-collapse: collapse; width: 100%;">
+                        <thead style="background-color: #fee2e2; color: #991b1b;">
+                            <tr>
+                                <th style="padding:10px;">KODE APAR</th>
+                                <th style="padding:10px;">LOKASI</th>
+                                <th style="padding:10px;">JENIS</th>
+                                <th style="padding:10px;">TGL EXPIRED</th>
+                                <th style="padding:10px;">MASALAH UTAMA</th>
+                                <th style="padding:10px;">KETERANGAN TAMBAHAN</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                
+                problemApars.forEach(p => {
+                    tableHTML += `<tr>
+                        <td style="padding:5px;">${p.kode}</td>
+                        <td style="padding:5px;">${p.lokasi}</td>
+                        <td style="padding:5px;">${p.jenis}</td>
+                        <td style="padding:5px;">${p.expired}</td>
+                        <td style="padding:5px; font-weight:bold; color:red;">${p.status}</td>
+                        <td style="padding:5px;">${p.notes}</td>
+                    </tr>`;
+                });
+
+                tableHTML += `</tbody></table></body></html>`;
+
+                const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `REKAP_MASALAH_APAR_${now.toLocaleDateString('id-ID').replace(/\//g,'-')}.xls`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             }
         };
         document.addEventListener('DOMContentLoaded', () => app.init());
