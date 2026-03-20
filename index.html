@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; }
         .fade-in { animation: fadeIn 0.4s ease-in-out; }
@@ -118,11 +118,10 @@
                 <button onclick="window.location.href='https://keslingk3.github.io/apkpelaporanujicoba/admin'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav text-left">
                     <i class="fa-solid fa-chart-pie w-5 text-center"></i> Dashboard Laporan K3
                 </button>
-                
-                <div class="admin-only space-y-2">
-                    <button onclick="app.navigate('profile')" id="nav-profile" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-user-tie w-5 text-center"></i> Profil User</button>
-                    <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav"><i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan</button>
-                </div>
+
+                <button onclick="window.location.href='MASUKKAN_LINK_WEB_IPAL_ANDA_DISINI'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition inactive-nav text-left">
+                    <img src="icon-ipal.png" alt="Icon IPAL" class="w-5 h-5 object-contain opacity-70"> Dashboard Monitoring Swapantau IPAL
+                </button>
             </div>
             <div class="p-6 border-t border-gray-100"><button onclick="app.handleLogout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition shadow-sm"><i class="fa-solid fa-power-off"></i>Logout</button><div class="text-center mt-4 text-[10px] text-gray-300 font-medium">© 2026 Instalasi K3KL</div></div>
         </aside>
@@ -137,11 +136,35 @@
                     <div><h2 class="text-2xl font-bold tracking-tight" id="pageTitle">BERANDA</h2><p class="text-blue-200 text-xs md:text-sm font-medium">Sistem Informasi Pelaporan & Monitoring APAR</p></div>
                 </div>
                 <div class="mt-4 md:mt-0 flex flex-col items-end">
-                    <div class="flex items-center gap-3 mb-1.5">
-                        <div class="text-right"><span class="block text-xs text-blue-200">Halo, <span id="headerUserName" class="block text-sm font-bold leading-none">Guest</span></div>
-                        <img id="headerProfileImg" src="" class="w-10 h-10 rounded-full border border-white/20 object-cover shadow-sm bg-white" alt="Profile">
+                    
+                    <div class="relative z-50">
+                        <button id="btnProfileDropdown" onclick="app.toggleProfileDropdown(event)" class="flex items-center gap-3 mb-1.5 focus:outline-none hover:opacity-80 transition text-right">
+                            <div><span class="block text-xs text-blue-200">Halo, <span id="headerUserName" class="block text-sm font-bold leading-none">Guest</span></span></div>
+                            <img id="headerProfileImg" src="" class="w-10 h-10 rounded-full border border-white/20 object-cover shadow-sm bg-white cursor-pointer" alt="Profile">
+                        </button>
+                        
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 transform origin-top-right transition-all">
+                            <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Menu Pengguna</p>
+                            </div>
+                            <button onclick="app.navigate('profile'); app.toggleProfileDropdown(event)" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 font-medium admin-only">
+                                <i class="fa-solid fa-user-tie w-5 text-center"></i> Profil User
+                            </button>
+                            <button onclick="app.navigate('settings'); app.toggleProfileDropdown(event)" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 font-medium admin-only">
+                                <i class="fa-solid fa-gear w-5 text-center"></i> Pengaturan
+                            </button>
+                            <button onclick="app.navigate('settings'); app.toggleProfileDropdown(event)" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 font-medium">
+                                <i class="fa-solid fa-circle-info w-5 text-center"></i> Tentang Aplikasi
+                            </button>
+                            <div class="border-t border-gray-50 mt-1 pt-1">
+                                <button onclick="app.handleLogout(); app.toggleProfileDropdown(event)" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-3 font-bold">
+                                    <i class="fa-solid fa-power-off w-5 text-center"></i> Logout
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 text-[10px] md:text-xs text-blue-100 bg-blue-800/30 px-3 py-1.5 rounded-full border border-blue-500/30"><span id="headerDate"><i class="fa-regular fa-calendar mr-1"></i> -</span><span class="w-px h-3 bg-blue-500/50 mx-1"></span><span id="clockDisplay" class="font-mono font-bold text-yellow-300"><i class="fa-regular fa-clock mr-1"></i> --:--</span><span id="statusOnlineBadge" class="ml-2"></span></div>
+
+                    <div class="flex items-center gap-3 text-[10px] md:text-xs text-blue-100 bg-blue-800/30 px-3 py-1.5 rounded-full border border-blue-500/30 mt-1"><span id="headerDate"><i class="fa-regular fa-calendar mr-1"></i> -</span><span class="w-px h-3 bg-blue-500/50 mx-1"></span><span id="clockDisplay" class="font-mono font-bold text-yellow-300"><i class="fa-regular fa-clock mr-1"></i> --:--</span><span id="statusOnlineBadge" class="ml-2"></span></div>
                 </div>
                 <div class="absolute bottom-[-24px] right-8 flex gap-3">
                      <button id="btnSync" onclick="app.syncOfflineData()" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-xl animate-pulse border-2 border-white hover:bg-yellow-300 transition"><i class="fa-solid fa-rotate"></i> Sync Data <span id="syncCount" class="bg-red-600 text-white px-1.5 rounded-full text-[10px]">0</span></button>
@@ -197,7 +220,8 @@
                             <div id="dashboardMovements" class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scroll"></div>
                         </div>
                     </div>
-                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/90 backdrop-blur-md p-5 rounded-2xl shadow-md border border-gray-100 sticky top-4 z-30 transition-shadow">
                         <div class="flex flex-wrap gap-3 w-full md:w-auto">
                             <select id="yearFilter" onchange="app.renderDashboard()" class="border border-gray-200 p-2.5 rounded-lg text-sm font-bold bg-gray-50 focus:outline-blue-500 focus:bg-white transition"></select>
                             <select id="monthFilter" onchange="app.renderDashboard()" class="border border-gray-200 p-2.5 rounded-lg text-sm font-bold bg-gray-50 focus:outline-blue-500 focus:bg-white transition"></select>
@@ -211,9 +235,24 @@
                             <button onclick="app.resetDatabase()" class="bg-white text-red-600 px-5 py-2.5 rounded-lg border border-red-200 hover:bg-red-50 transition text-xs font-bold admin-only flex items-center gap-2"><i class="fa-solid fa-trash-can"></i> Reset</button>
                         </div>
                     </div>
+                    
                     <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                        <div class="bg-blue-50 text-blue-600 text-[10px] font-bold px-4 py-2 flex items-center justify-center gap-2 block md:hidden border-b border-blue-100">
+                            <i class="fa-solid fa-arrows-left-right animate-pulse"></i> Geser tabel ke kanan-kiri untuk melihat detail
+                        </div>
                         <div class="overflow-x-auto"><table class="min-w-full" id="dataTable"><thead class="bg-gray-50/80 text-gray-500 uppercase text-[11px] font-extrabold tracking-wider"><tr><th class="py-5 px-6 text-left">Kode APAR</th><th class="py-5 px-6 text-left">Lokasi</th><th class="py-5 px-6 text-center">Jenis APAR</th><th class="py-5 px-6 text-center">Tanggal Isi</th><th class="py-5 px-6 text-center">Expired</th><th class="py-5 px-6 text-center">Status</th><th class="py-5 px-6 text-center admin-only">Aksi</th></tr></thead><tbody id="aparTableBody" class="text-gray-700 text-sm font-medium divide-y divide-gray-100"></tbody></table></div>
-                        <div id="emptyState" class="hidden text-center py-16 text-gray-400"><div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse"><i class="fa-solid fa-clipboard-list text-3xl text-gray-300"></i></div><p class="font-medium">Data tidak ditemukan.</p></div>
+                        
+                        <div id="emptyState" class="hidden text-center py-16 text-gray-400">
+                            <div class="relative w-24 h-24 mx-auto mb-6">
+                                <div class="absolute inset-0 bg-blue-50 rounded-full animate-ping opacity-50"></div>
+                                <div class="relative bg-white border-4 border-gray-50 w-24 h-24 rounded-full flex items-center justify-center shadow-sm">
+                                    <i class="fa-solid fa-folder-open text-4xl text-gray-300"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-bold text-gray-600 mb-1">Belum Ada Data</h4>
+                            <p class="text-sm font-medium text-gray-400">Coba sesuaikan filter pencarian atau tambahkan data APAR baru.</p>
+                        </div>
+                        
                         <div class="flex justify-between items-center p-5 bg-gray-50 border-t border-gray-100"><span class="text-xs text-gray-500 font-bold" id="paginationInfo">Loading data...</span><div class="flex gap-2"><button onclick="app.changePage(-1)" class="bg-white border hover:bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50 shadow-sm" id="btnPrev">Prev</button><button onclick="app.changePage(1)" class="bg-white border hover:bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold disabled:opacity-50 shadow-sm" id="btnNext">Next</button></div></div>
                     </div>
                 </div>
@@ -303,11 +342,11 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Jenis</span><span id="detailJenis" class="font-bold text-gray-800 text-lg"></span></div>
-                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Berat</span><span id="detailBerat" class="font-bold text-gray-800 text-lg"></span></div>
-                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Tgl Isi</span><span id="detailRefill" class="font-bold text-gray-800"></span></div>
-                            <div><span class="block text-gray-400 text-[10px] font-bold uppercase mb-1">Kadaluarsa</span><span id="detailExpired" class="font-bold text-red-600"></span></div>
+                        <div class="grid grid-cols-2 gap-4 text-sm bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="block text-gray-400 text-[10px] font-extrabold uppercase mb-1 tracking-wider">Jenis</span><span id="detailJenis" class="font-black text-gray-900 text-lg"></span></div>
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="block text-gray-400 text-[10px] font-extrabold uppercase mb-1 tracking-wider">Berat</span><span id="detailBerat" class="font-black text-gray-900 text-lg"></span></div>
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100"><span class="block text-gray-400 text-[10px] font-extrabold uppercase mb-1 tracking-wider">Tgl Isi</span><span id="detailRefill" class="font-bold text-gray-700"></span></div>
+                            <div class="bg-red-50 p-3 rounded-xl border border-red-100"><span class="block text-red-400 text-[10px] font-extrabold uppercase mb-1 tracking-wider">Kadaluarsa</span><span id="detailExpired" class="font-black text-red-600"></span></div>
                         </div>
 
                         <div class="mt-8">
@@ -367,7 +406,7 @@
                             <div id="evidenceContainer" class="hidden mb-8 bg-red-50 p-6 rounded-2xl border-2 border-dashed border-red-300 text-center">
                                 <div class="mb-3 text-red-400 text-3xl"><i class="fa-solid fa-camera"></i></div>
                                 <label class="block text-red-800 text-sm font-bold mb-2 uppercase tracking-wide">Wajib Foto Bukti Kerusakan</label>
-                                <input type="file" id="evidencePhoto" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-white file:text-red-600 hover:file:bg-red-100 cursor-pointer">
+                                <input type="file" id="evidencePhoto" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-white file:text-red-600 hover:file:bg-red-100 cursor-pointer">
                             </div>
 
                             <div class="mb-8"><label class="block text-gray-500 text-xs font-bold uppercase mb-2">Catatan Tambahan</label><textarea id="inputNotes" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 h-28 text-sm resize-none transition" placeholder="Tulis keterangan jika ada kerusakan..."></textarea></div>
@@ -438,8 +477,8 @@
     <div id="labelPrintArea" class="hidden bg-white p-4 border border-gray-800 w-[300px] text-center mx-auto"><h2 class="text-lg font-bold uppercase mb-1 border-b border-black pb-1">KARTU INSPEKSI APAR</h2><h3 class="text-xs mb-2">RSJMM BOGOR</h3><div id="printQrContainer" class="flex justify-center my-2"></div><div class="text-xl font-black my-1" id="printLabelKode"></div><div class="text-sm italic" id="printLabelLokasi"></div><div class="text-[10px] mt-2 border-t pt-1">Scan untuk update status & cek riwayat</div></div><div id="printAllArea" class="hidden"></div>
 
     <script>
-        // ⚠️ PASTE URL GOOGLE APPS SCRIPT ANDA DI SINI:
-        const API_URL = "https://script.google.com/macros/s/AKfycbzt9AnnNAAQtpDFWXjHlSXv9mDllQfH3CZxvANgU-gEPAs_NTAy7pRPC-GdH58srGRK/exec"; 
+        // 🚀 URL FIREBASE ANDA
+        const firebaseUrl = "https://sikasik-7b9ce-default-rtdb.asia-southeast1.firebasedatabase.app"; 
         
         const app = {
             data: { apars: [], checks: [], movements: [], dismissed: JSON.parse(localStorage.getItem('dismissed')) || [], months: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"], fullMonths: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"], currentPage: 1, itemsPerPage: 10, currentDetailId: null, historyToEdit: null, pendingScanAction: null, pendingScanId: null },
@@ -460,22 +499,42 @@
                 }
             },
 
+            // 🚀 MESIN LOGIN FIREBASE UNTUK WEB
             handleLogin: async function(e) { 
-                e.preventDefault(); const u = document.getElementById('loginUser').value; const p = document.getElementById('loginPass').value; this.toggleLoading(true, "Memeriksa Database...");
-                try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', username: u, password: p }) }); const j = await r.json();
-                    if (j.status === 'success') { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userRole', j.role); localStorage.setItem('petugasName', j.petugasName); localStorage.setItem('petugasId', u); 
-                        if(j.photoUrl) localStorage.setItem('petugasPhoto', this.formatPhotoUrl(j.photoUrl)); else localStorage.removeItem('petugasPhoto'); 
-                        if(j.petugasName) document.getElementById('inputPetugas').value = j.petugasName; document.getElementById('login-screen').classList.add('hidden');
-                        
-                        // Jika Login dari Scan, masuk ke Detail Dulu
-                        if (this.data.pendingScanAction === 'inspect' && this.data.pendingScanId) { 
-                            if (this.data.apars.length === 0) { await this.fetchDataWithTimeout(); } 
-                            this.data.pendingScanAction = null; 
-                            document.getElementById('main-app').classList.remove('hidden'); 
-                            this.showDetail(this.data.pendingScanId); 
-                        } else { this.init(); }
-                    } else { alert(j.message || 'Login Gagal!'); }
-                } catch (err) { console.error(err); alert('Login sukses.'); } finally { this.toggleLoading(false); }
+                e.preventDefault(); const u = document.getElementById('loginUser').value.trim(); const p = document.getElementById('loginPass').value; this.toggleLoading(true, "Memeriksa Database...");
+                try { 
+                    const r = await fetch(firebaseUrl + "/USERS.json"); 
+                    const j = await r.json();
+                    let found = false;
+                    if (j) {
+                        Object.keys(j).forEach(key => {
+                            let v = j[key];
+                            let dbUser = String(v.username || v.Username || "");
+                            let dbPass = String(v.password || v.Password || "");
+                            let dbRole = String(v.role || v.Role || "User");
+                            let dbName = String(v.nama_lengkap || v.Nama_Lengkap || v.username || "Petugas");
+                            
+                            if (dbUser === u && dbPass === p) {
+                                found = true;
+                                localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userRole', dbRole); localStorage.setItem('petugasName', dbName); localStorage.setItem('petugasId', u); localStorage.setItem('firebaseUserKey', key);
+                                if(v.foto_profil || v.photoUrl) localStorage.setItem('petugasPhoto', this.formatPhotoUrl(v.foto_profil || v.photoUrl)); else localStorage.removeItem('petugasPhoto'); 
+                                if(dbName) document.getElementById('inputPetugas').value = dbName; document.getElementById('login-screen').classList.add('hidden');
+                                
+                                if (this.data.pendingScanAction === 'inspect' && this.data.pendingScanId) { 
+                                    if (this.data.apars.length === 0) { this.fetchDataWithTimeout(); } 
+                                    this.data.pendingScanAction = null; 
+                                    document.getElementById('main-app').classList.remove('hidden'); 
+                                    this.showDetail(this.data.pendingScanId); 
+                                } else { this.init(); }
+                            }
+                        });
+                    }
+                    if (!found && u==="admin" && p==="admin123") {
+                        localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userRole', 'Admin'); localStorage.setItem('petugasName', 'Kepala K3KL'); document.getElementById('login-screen').classList.add('hidden'); this.init();
+                    } else if (!found) {
+                        alert('Username atau Password salah!');
+                    }
+                } catch (err) { console.error(err); alert('Koneksi Error. Pastikan internet stabil.'); } finally { this.toggleLoading(false); }
             },
             cancelLogin: function() { document.getElementById('login-screen').classList.add('hidden'); const scanId = new URLSearchParams(window.location.search).get('id'); if (scanId) { document.getElementById('scan-choice-screen').classList.remove('hidden'); } else { document.getElementById('login-screen').classList.remove('hidden'); } },
             
@@ -488,6 +547,7 @@
                 localStorage.removeItem('petugasName'); 
                 localStorage.removeItem('petugasId'); 
                 localStorage.removeItem('petugasPhoto'); 
+                localStorage.removeItem('firebaseUserKey');
                 location.reload();
             },
             
@@ -496,7 +556,6 @@
                 const localApars = localStorage.getItem('cached_apars'); const localChecks = localStorage.getItem('cached_checks');
                 if (localApars) { try { this.data.apars = JSON.parse(localApars); this.data.checks = JSON.parse(localChecks || "[]"); } catch(e) {} }
                 
-                // --- LOGIKA UTAMA SCAN ID ---
                 if (scanId) { 
                     document.body.classList.add('scan-mode');
                     document.getElementById('main-app').classList.remove('hidden');
@@ -541,16 +600,48 @@
                 this.navigate('dashboard');
             },
 
+            // 🚀 MESIN PENARIK DATA DARI FIREBASE 
             fetchDataWithTimeout: async function() {
-                try { const r = await fetch(API_URL + "?action=getData"); const j = await r.json(); this.data.apars = j.apars || []; this.data.checks = j.checks || []; this.data.movements = j.movements || []; localStorage.setItem('cached_apars', JSON.stringify(this.data.apars)); localStorage.setItem('cached_checks', JSON.stringify(this.data.checks)); this.renderDashboard(); document.getElementById('statusOnlineBadge').innerText = "ONLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top"; this.checkNotifications(); } catch (err) { console.error("Fetch Error:", err); document.getElementById('statusOnlineBadge').innerText = "OFFLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-gray-500 text-white px-1 py-0.5 rounded align-top"; }
+                try { 
+                    const rApar = await fetch(firebaseUrl + "/APAR_DATA.json"); const jApar = await rApar.json(); 
+                    this.data.apars = jApar ? Object.keys(jApar).map(k => { let o = jApar[k]; o.firebaseKey = k; return o; }) : []; 
+                    
+                    const rCheck = await fetch(firebaseUrl + "/CHECK_HISTORY.json"); const jCheck = await rCheck.json(); 
+                    this.data.checks = jCheck ? Object.keys(jCheck).map(k => { let o = jCheck[k]; o.firebaseKey = k; return o; }) : []; 
+                    
+                    const rMove = await fetch(firebaseUrl + "/MOVEMENT_HISTORY.json"); const jMove = await rMove.json(); 
+                    this.data.movements = jMove ? Object.values(jMove) : []; 
+                    
+                    localStorage.setItem('cached_apars', JSON.stringify(this.data.apars)); 
+                    localStorage.setItem('cached_checks', JSON.stringify(this.data.checks)); 
+                    this.renderDashboard(); 
+                    document.getElementById('statusOnlineBadge').innerText = "ONLINE"; 
+                    document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-green-500 text-white px-1 py-0.5 rounded align-top"; 
+                    this.checkNotifications(); 
+                } catch (err) { 
+                    console.error("Fetch Error:", err); document.getElementById('statusOnlineBadge').innerText = "OFFLINE"; document.getElementById('statusOnlineBadge').className = "text-[10px] font-normal bg-gray-500 text-white px-1 py-0.5 rounded align-top"; 
+                }
             },
+            
+            // 🚀 MESIN PENGIRIM DATA KE FIREBASE 
             sendData: async function(p) {
-                try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(p) }); const j = await r.json(); if(j.status === 'success') { return true; } else { throw new Error(j.message); } } catch (err) { this.saveToOfflineQueue(p); return true; }
+                try { 
+                    let url = firebaseUrl; let method = 'POST'; let bodyData = {...p}; delete bodyData.action;
+                    if (p.action === 'addApar') { url += '/APAR_DATA.json'; }
+                    else if (p.action === 'editApar') { const a = this.data.apars.find(x => String(x.id) === String(p.id)); if(a && a.firebaseKey) { url += '/APAR_DATA/' + a.firebaseKey + '.json'; method = 'PATCH'; } else { throw new Error('Key not found'); } }
+                    else if (p.action === 'deleteApar') { const a = this.data.apars.find(x => String(x.id) === String(p.id)); if(a && a.firebaseKey) { url += '/APAR_DATA/' + a.firebaseKey + '.json'; method = 'DELETE'; bodyData = null; } }
+                    else if (p.action === 'addCheck' || p.action === 'saveCheck' || p.action === 'editCheck') { url += '/CHECK_HISTORY.json'; } 
+                    else if (p.action === 'moveApar') { const a = this.data.apars.find(x => String(x.id) === String(p.id)); if(a && a.firebaseKey) { await fetch(firebaseUrl + '/APAR_DATA/' + a.firebaseKey + '.json', { method: 'PATCH', body: JSON.stringify({lokasi: p.newLokasi}) }); } url += '/MOVEMENT_HISTORY.json'; }
+                    else if (p.action === 'changeAccount') { const key = localStorage.getItem('firebaseUserKey'); if(key) { url += '/USERS/' + key + '.json'; method = 'PATCH'; bodyData = {password: p.newPass}; if(p.newUser) bodyData.username = p.newUser;} }
+                    
+                    const r = await fetch(url, { method: method, body: bodyData ? JSON.stringify(bodyData) : null }); 
+                    if(r.ok) { return true; } else { throw new Error('Failed'); } 
+                } catch (err) { this.saveToOfflineQueue(p); return true; }
             },
             saveToOfflineQueue: function(p) { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); q.push(p); localStorage.setItem('offlineQueue', JSON.stringify(q)); },
             updateSyncButton: function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); const b = document.getElementById('btnSync'); const c = document.getElementById('syncCount'); if (q.length > 0 && navigator.onLine) { b.classList.remove('hidden'); c.innerText = q.length; } else { b.classList.add('hidden'); } },
-            syncOfflineData: async function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); if (q.length === 0) return; if(!confirm(`Ada ${q.length} data offline. Kirim?`)) return; this.toggleLoading(true, "Sync..."); let sc = 0; const nq = []; for (let i = 0; i < q.length; i++) { try { const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(q[i]) }); const j = await r.json(); if(j.status === 'success') { sc++; } else { nq.push(q[i]); } } catch (e) { nq.push(q[i]); } } localStorage.setItem('offlineQueue', JSON.stringify(nq)); await this.fetchDataWithTimeout(); this.updateSyncButton(); this.toggleLoading(false); alert(`${sc} Terkirim. Sisa: ${nq.length}`); },
-            resetDatabase: async function() { if(localStorage.getItem('userRole') !== 'Admin') { alert('Hanya ADMIN!'); return; } const p = prompt("Password ADMIN:"); if (p === "admin123") { if(confirm("YAKIN HAPUS SEMUA?")) { const s = await this.sendData({ action: "resetDatabase" }); if(s) { localStorage.removeItem('cached_apars'); localStorage.removeItem('cached_checks'); localStorage.removeItem('dismissed'); alert("Reset Berhasil."); location.reload(); } } } else if (p!==null) { alert("Password Salah!"); } },
+            syncOfflineData: async function() { const q = JSON.parse(localStorage.getItem('offlineQueue') || "[]"); if (q.length === 0) return; if(!confirm(`Ada ${q.length} data offline. Kirim?`)) return; this.toggleLoading(true, "Sync..."); let sc = 0; const nq = []; for (let i = 0; i < q.length; i++) { try { const s = await this.sendData(q[i]); if(s) { sc++; } else { nq.push(q[i]); } } catch (e) { nq.push(q[i]); } } localStorage.setItem('offlineQueue', JSON.stringify(nq)); await this.fetchDataWithTimeout(); this.updateSyncButton(); this.toggleLoading(false); alert(`${sc} Terkirim. Sisa: ${nq.length}`); },
+            resetDatabase: async function() { if(localStorage.getItem('userRole') !== 'Admin') { alert('Hanya ADMIN!'); return; } const p = prompt("Password ADMIN:"); if (p === "admin123") { if(confirm("YAKIN HAPUS SEMUA DATA APAR? (User & Laporan tidak dihapus)")) { await fetch(firebaseUrl + '/APAR_DATA.json', {method: 'DELETE'}); await fetch(firebaseUrl + '/CHECK_HISTORY.json', {method: 'DELETE'}); await fetch(firebaseUrl + '/MOVEMENT_HISTORY.json', {method: 'DELETE'}); localStorage.removeItem('cached_apars'); localStorage.removeItem('cached_checks'); localStorage.removeItem('dismissed'); alert("Reset Berhasil."); location.reload(); } } else if (p!==null) { alert("Password Salah!"); } },
 
             changePage: function(d) { this.data.currentPage += d; this.renderDashboard(); },
             renderDashboard: function() {
@@ -574,7 +665,7 @@
                 });
                 
                 let sTotal=fApars.length, sChecked=0, sGood=0, sBad=0, cPow=0, cCo2=0, cFoam=0, cClean=0;
-                let cExp = 0, cRusak = 0, cRefill = 0; // COUNTER BARU
+                let cExp = 0, cRusak = 0, cRefill = 0; 
 
                 fApars.forEach(a => {
                     const j = (a.jenis || '').toLowerCase(); if(j.includes('powder')) cPow++; else if(j.includes('co2')) cCo2++; else if(j.includes('foam')) cFoam++; else cClean++;
@@ -583,17 +674,14 @@
                     else { const curC = this.data.checks.find(c => String(c.aparId) === String(a.id) && c.year == new Date().getFullYear() && c.month == new Date().getMonth()); if(curC) sChecked++; tC = this.getLastCheck(a.id); }
                     if(tC) { String(tC.isGood)==='true' ? sGood++ : sBad++; }
 
-                    // LOGIKA BARU: HITUNG EXPIRED, RUSAK FISIK, ISI ULANG
-                    // 1. Cek Expired
                     if (new Date(a.expiredDate) < new Date()) { cExp++; }
 
-                    // 2. Cek Status Terkini (Rusak/Isi Ulang) berdasarkan inspeksi terakhir
                     const lastC = this.getLastCheck(a.id);
                     if (lastC && String(lastC.isGood) === 'false') {
                          if (lastC.notes && lastC.notes.includes('HARUS DIISI ULANG')) {
                              cRefill++;
                          } else {
-                             cRusak++; // Rusak Fisik biasa
+                             cRusak++; 
                          }
                     }
                 });
@@ -601,7 +689,6 @@
                 document.getElementById('statTotal').innerText = sTotal; document.getElementById('statChecked').innerText = sChecked; document.getElementById('statGood').innerText = sGood; document.getElementById('statBad').innerText = sBad;
                 document.getElementById('countPowder').innerText = cPow; document.getElementById('countCo2').innerText = cCo2; document.getElementById('countFoam').innerText = cFoam; document.getElementById('countClean').innerText = cClean;
                 
-                // UPDATE STATISTIK BARU DI DASHBOARD
                 document.getElementById('countExpired').innerText = cExp;
                 document.getElementById('countRusak').innerText = cRusak;
                 document.getElementById('countRefill').innerText = cRefill;
@@ -649,7 +736,23 @@
             },
             renderDashboardMovements: function() { const c = document.getElementById('dashboardMovements'); c.innerHTML = ''; const m = [...this.data.movements].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5); if(m.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center p-2">Belum ada riwayat perpindahan.</div>'; return; } m.forEach(x => { const a = this.data.apars.find(z => String(z.id) == String(x.aparId)); const k = a ? a.kode : 'APAR Terhapus'; c.innerHTML += `<div class="flex items-center gap-3 text-xs border-b border-gray-100 pb-2 p-1 hover:bg-orange-50 rounded"><div class="bg-orange-100 text-orange-600 p-1.5 rounded-full"><i class="fa-solid fa-arrow-right-arrow-left"></i></div><div class="flex-1"><div class="flex justify-between"><span class="font-bold text-gray-700">${k}</span><span class="text-[10px] text-gray-400">${new Date(x.timestamp).toLocaleDateString('id-ID')}</span></div><div class="flex items-center gap-1 mt-0.5"><span class="line-through text-red-400">${x.oldLocation}</span><i class="fa-solid fa-arrow-right text-[8px] text-gray-400"></i><span class="font-bold text-green-600">${x.newLocation}</span></div></div></div>`; }); },
             toggleNotifications: function(e) { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('hidden'); },
-            closeDropdown: function(e) { if (!document.getElementById('notifDropdown').contains(e.target) && !document.getElementById('btnNotif').contains(e.target)) { document.getElementById('notifDropdown').classList.add('hidden'); } },
+            toggleProfileDropdown: function(e) { 
+                e.stopPropagation(); 
+                document.getElementById('profileDropdown').classList.toggle('hidden'); 
+            },
+            closeDropdown: function(e) { 
+                const pd = document.getElementById('profileDropdown');
+                const btnPd = document.getElementById('btnProfileDropdown');
+                if (pd && btnPd && !pd.contains(e.target) && !btnPd.contains(e.target)) {
+                    pd.classList.add('hidden');
+                }
+                
+                const nd = document.getElementById('notifDropdown');
+                const btnNd = document.getElementById('btnNotif');
+                if (nd && btnNd && !nd.contains(e.target) && !btnNd.contains(e.target)) { 
+                    nd.classList.add('hidden'); 
+                } 
+            },
             checkNotifications: function() { 
                 const b = document.getElementById('notifBadge'); const l = document.getElementById('notifList'); if (!b || !l) return;
                 l.innerHTML = ''; let c = 0; const t = new Date(); this.data.apars.forEach(a => { const e = new Date(a.expiredDate); const d = Math.ceil((e - t) / (1000 * 60 * 60 * 24)); if (d < 0 && !this.isDismissed('exp', a.id)) { c++; this.addNotifItem(l, 'bg-red-50 border-red-200', 'text-red-700', 'KADALUARSA', `APAR ${a.kode} sudah lewat tanggal kadaluarsa!`, a.id, 'exp'); } else if (d < 30 && d >= 0 && !this.isDismissed('expwarn', a.id)) { c++; this.addNotifItem(l, 'bg-yellow-50 border-yellow-200', 'text-yellow-700', 'AKAN KADALUARSA', `APAR ${a.kode} expired dalam ${d} hari.`, a.id, 'expwarn'); } const lc = this.getLastCheck(a.id); if (lc && String(lc.isGood) === 'false' && !this.isDismissed('dmg', a.id)) { c++; this.addNotifItem(l, 'bg-orange-50 border-orange-200', 'text-orange-700', 'KONDISI RUSAK', `APAR ${a.kode} dilaporkan RUSAK. Butuh perbaikan.`, a.id, 'dmg'); } const cm = this.data.checks.some(k => String(k.aparId) == String(a.id) && k.month == t.getMonth() && k.year == t.getFullYear()); if (!cm && t.getDate() > 20 && !this.isDismissed('uncheck', a.id)) { c++; this.addNotifItem(l, 'bg-blue-50 border-blue-200', 'text-blue-700', 'BELUM DICEK', `APAR ${a.kode} belum dicek bulan ini.`, a.id, 'uncheck'); } }); if (c > 0) { b.classList.remove('hidden'); b.innerText = c; } else { b.classList.add('hidden'); l.innerHTML = '<div class="p-8 text-center text-sm text-gray-400 italic">Semua Aman!</div>'; } },
@@ -746,7 +849,6 @@
                             <div class="text-xs italic text-gray-600 mt-1">"${x.notes}"</div>
                             <div class="text-[10px] text-gray-500 font-bold mt-1"><i class="fa-solid fa-user-tag mr-1"></i> ${x.petugas || '-'}</div>
                         </div>
-                        <button onclick="app.editHistory('${id}', '${x.timestamp}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white border shadow-sm p-1 rounded text-blue-500 hover:text-blue-700 transition admin-only"><i class="fa-solid fa-pen text-xs"></i></button>
                     </div>`; 
                 }); 
             },
@@ -802,8 +904,6 @@
                 this.sendData(cd).catch(err => { console.error("Background sync failed, saving to offline queue"); });
             },
             
-            editHistory: function(id, ts) { const c = this.data.checks.find(x => String(x.aparId) == String(id) && x.timestamp == ts); if(c) { this.data.historyToEdit = c; document.getElementById('editHistoryStatus').value = c.isGood; document.getElementById('editHistoryNote').value = c.notes; document.getElementById('editHistoryModal').classList.remove('hidden'); } },
-            saveEditedHistory: async function() { if(!this.data.historyToEdit) return; const p = { action: "editCheck", aparId: this.data.historyToEdit.aparId, timestamp: this.data.historyToEdit.timestamp, isGood: document.getElementById('editHistoryStatus').value, notes: document.getElementById('editHistoryNote').value }; await this.sendData(p); document.getElementById('editHistoryModal').classList.add('hidden'); this.showDetail(this.data.historyToEdit.aparId); },
             showTindakLanjutModal: function() { document.getElementById('tindakLanjutModal').classList.remove('hidden'); },
             submitTindakLanjut: async function() { const id = this.data.currentDetailId; const p = { action: "addCheck", aparId: id, year: new Date().getFullYear(), month: new Date().getMonth(), timestamp: new Date().toISOString(), isGood: true, notes: "TINDAK LANJUT: " + document.getElementById('tlNote').value, petugas: document.getElementById('tlPetugas').value }; await this.sendData(p); document.getElementById('tindakLanjutModal').classList.add('hidden'); this.showDetail(id); },
             editCurrentApar: function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); if(!a) return; document.getElementById('editAparId').value = a.id; document.getElementById('inputKode').value = a.kode; document.getElementById('inputLokasi').value = a.lokasi; document.getElementById('inputJenis').value = a.jenis; document.getElementById('inputBerat').value = a.berat; document.getElementById('inputRefill').value = a.refillDate ? new Date(a.refillDate).toISOString().split('T')[0] : ''; document.getElementById('inputExpired').value = new Date(a.expiredDate).toISOString().split('T')[0]; document.getElementById('formTitle').innerText = "Edit Data APAR"; document.getElementById('btnSaveApar').innerText = "Update"; this.navigate('add-apar'); },
@@ -823,7 +923,6 @@
                 sy.innerHTML = ''; const cy = new Date().getFullYear(); for(let i=cy; i>=cy-2; i--) { const opt = document.createElement('option'); opt.value = i; opt.text = i; sy.appendChild(opt); }
             },
 
-            // --- REVISI: EXPORT EXCEL DENGAN LINK MENGARAH KE DETAIL APLIKASI ---
             processExport: function() {
                 const m = parseInt(document.getElementById('exportMonth').value);
                 const y = parseInt(document.getElementById('exportYear').value);
@@ -836,7 +935,6 @@
                     tableHTML += `<tr><td colspan="8" style="text-align:center;">Tidak ada data APAR.</td></tr>`; 
                 } else {
                     this.data.apars.forEach(apar => {
-                        // Cari apakah APAR ini dicek pada bulan & tahun yang dipilih
                         const c = this.data.checks.find(chk => String(chk.aparId) === String(apar.id) && parseInt(chk.month) === m && parseInt(chk.year) === y);
                         
                         const kode = apar.kode || '-'; 
@@ -863,7 +961,6 @@
                                 status = 'RUSAK'; color = 'red';
                             }
 
-                            // JIKA ADA FOTO, BUAT LINK MENGARAH KE APLIKASI WEB
                             if (c.imageData && c.imageData.trim() !== '') {
                                 const detailUrl = window.location.href.split('?')[0] + '?id=' + apar.id;
                                 fotoHtml = `<a href="${detailUrl}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">Lihat di Aplikasi</a>`;
@@ -897,17 +994,14 @@
                 document.getElementById('exportModal').classList.add('hidden');
             },
 
-            // --- FUNGSI EXPORT BARU UNTUK REKAPAN MASALAH ---
             processProblemExport: function() {
                 const now = new Date();
                 const problemApars = [];
 
                 this.data.apars.forEach(a => {
                     let issue = [];
-                    // 1. Cek Expired
                     if (new Date(a.expiredDate) < now) { issue.push("EXPIRED"); }
 
-                    // 2. Cek Status Terkini (Rusak/Refill)
                     const lastC = this.getLastCheck(a.id);
                     if (lastC && String(lastC.isGood) === 'false') {
                         if (lastC.notes && lastC.notes.includes('HARUS DIISI ULANG')) { issue.push("HARUS DIISI ULANG"); }
