@@ -652,42 +652,88 @@
                 
                 if (!this.data.apars || this.data.apars.length === 0) { em.classList.remove('hidden'); document.getElementById('paginationInfo').innerText = ""; return; } else { em.classList.add('hidden'); }
 
-                let fApars = this.data.apars.filter(a => {
-                    let lastCheck;
-                    if(sMonth !== "") { lastCheck = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); } 
-                    else { lastCheck = this.getLastCheck(a.id); }
-                    const isExpired = new Date(a.expiredDate) < new Date();
-                    let st = "belum dicek"; 
-                    if (lastCheck) { st = String(lastCheck.isGood)==='true' ? "baik" : "rusak"; }
-                    const d1 = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : ""; const d2 = new Date(a.expiredDate).toLocaleDateString('id-ID');
-                    const comb = `${a.kode} ${a.lokasi} ${a.jenis} ${a.berat} ${d1} ${d2} ${st}`.toLowerCase();
-                    return comb.includes(search);
-                });
-                
-                let sTotal=fApars.length, sChecked=0, sGood=0, sBad=0, cPow=0, cCo2=0, cFoam=0, cClean=0;
+                // 🚀 ADAPTASI LOGIKA DART KE HTML (Pencarian & Perhitungan Terpadu 100% Sama)
+                let fApars = [];
+                let sTotal=0, sChecked=0, sGood=0, sBad=0, cPow=0, cCo2=0, cFoam=0, cClean=0;
                 let cExp = 0, cRusak = 0, cRefill = 0; 
 
-                fApars.forEach(a => {
-                    const j = (a.jenis || '').toLowerCase(); if(j.includes('powder')) cPow++; else if(j.includes('co2')) cCo2++; else if(j.includes('foam')) cFoam++; else cClean++;
-                    let tC;
-                    if(sMonth !== "") { tC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); if(tC) sChecked++; } 
-                    else { const curC = this.data.checks.find(c => String(c.aparId) === String(a.id) && c.year == new Date().getFullYear() && c.month == new Date().getMonth()); if(curC) sChecked++; tC = this.getLastCheck(a.id); }
-                    if(tC) { String(tC.isGood)==='true' ? sGood++ : sBad++; }
+                this.data.apars.forEach(a => {
+                    let lastCheckTarget = null;
 
-                    if (new Date(a.expiredDate) < new Date()) { cExp++; }
+                    // Filter riwayat ceklis berdasarkan Bulan & Tahun
+                    if (sMonth !== "") {
+                        let checksInMonth = this.data.checks.filter(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth));
+                        if (checksInMonth.length > 0) {
+                            checksInMonth.sort((x, y) => new Date(x.timestamp) - new Date(y.timestamp));
+                            lastCheckTarget = checksInMonth[checksInMonth.length - 1]; // Ambil yang paling baru di bulan tersebut
+                        }
+                    } else {
+                        lastCheckTarget = this.getLastCheck(a.id); // Jika "Semua", ambil riwayat paling terakhir kapanpun itu
+                    }
 
-                    const lastC = this.getLastCheck(a.id);
-                    if (lastC && String(lastC.isGood) === 'false') {
-                         if (lastC.notes && lastC.notes.includes('HARUS DIISI ULANG')) {
-                             cRefill++;
-                         } else {
-                             cRusak++; 
-                         }
+                    // Cek Expired
+                    let isExpired = false;
+                    if (a.expiredDate && new Date(a.expiredDate) < new Date()) {
+                        isExpired = true;
+                    }
+
+                    // Penentuan Status Persis Seperti Dart (Prioritas Expired)
+                    let statusText = "BELUM DICEK";
+                    if (isExpired) {
+                        statusText = "EXPIRED";
+                    } else if (lastCheckTarget != null) {
+                        if (String(lastCheckTarget.isGood) === 'true') {
+                            statusText = "BAIK";
+                        } else if (lastCheckTarget.notes && lastCheckTarget.notes.includes("HARUS DIISI ULANG")) {
+                            statusText = "HARUS DIISI ULANG";
+                        } else {
+                            statusText = "RUSAK";
+                        }
+                    }
+
+                    const d1 = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : "-"; 
+                    const d2 = a.expiredDate ? new Date(a.expiredDate).toLocaleDateString('id-ID') : "-";
+                    const jenisStr = (a.jenis || '').toLowerCase();
+                    const comb = `${a.kode} ${a.lokasi} ${jenisStr} ${a.berat} ${d1} ${d2} ${statusText}`.toLowerCase();
+
+                    // Masukkan ke array jika lolos kolom pencarian
+                    if (search === "" || comb.includes(search)) {
+                        a.computedStatus = statusText;
+                        a.lastCheckTarget = lastCheckTarget;
+                        a.isExpired = isExpired;
+                        fApars.push(a);
+
+                        sTotal++;
+                        if(jenisStr.includes('powder')) cPow++; 
+                        else if(jenisStr.includes('co2')) cCo2++; 
+                        else if(jenisStr.includes('foam')) cFoam++; 
+                        else cClean++;
+
+                        if (isExpired) cExp++;
+                        if (lastCheckTarget != null) sChecked++;
+
+                        if (statusText === "BAIK") {
+                            sGood++;
+                        } else if (statusText === "HARUS DIISI ULANG") {
+                            cRefill++;
+                        } else if (statusText === "RUSAK") {
+                            cRusak++;
+                        }
                     }
                 });
 
-                document.getElementById('statTotal').innerText = sTotal; document.getElementById('statChecked').innerText = sChecked; document.getElementById('statGood').innerText = sGood; document.getElementById('statBad').innerText = sBad;
-                document.getElementById('countPowder').innerText = cPow; document.getElementById('countCo2').innerText = cCo2; document.getElementById('countFoam').innerText = cFoam; document.getElementById('countClean').innerText = cClean;
+                sBad = cExp + cRusak + cRefill;
+
+                // Memasukkan angka ke dalam kotak dashboard
+                document.getElementById('statTotal').innerText = sTotal; 
+                document.getElementById('statChecked').innerText = sChecked; 
+                document.getElementById('statGood').innerText = sGood; 
+                document.getElementById('statBad').innerText = sBad;
+                
+                document.getElementById('countPowder').innerText = cPow; 
+                document.getElementById('countCo2').innerText = cCo2; 
+                document.getElementById('countFoam').innerText = cFoam; 
+                document.getElementById('countClean').innerText = cClean;
                 
                 document.getElementById('countExpired').innerText = cExp;
                 document.getElementById('countRusak').innerText = cRusak;
@@ -695,6 +741,7 @@
 
                 this.renderDashboardMovements();
 
+                // Paginasi
                 const tP = Math.ceil(fApars.length / this.data.itemsPerPage);
                 if (this.data.currentPage < 1) this.data.currentPage = 1; if (this.data.currentPage > tP) this.data.currentPage = tP || 1;
                 
@@ -702,6 +749,40 @@
                 document.getElementById('paginationInfo').innerText = `Menampilkan ${start + 1} - ${Math.min(end, fApars.length)} dari ${fApars.length} data`;
                 document.getElementById('btnPrev').disabled = this.data.currentPage === 1; document.getElementById('btnNext').disabled = this.data.currentPage === tP;
 
+                // Render Tabel
+                pItems.forEach(a => {
+                    let bg = '<span class="bg-gray-100 text-gray-400 py-1 px-2 rounded-full text-[10px] font-bold">BELUM</span>';
+                    let st = a.computedStatus;
+                    let mN = a.lastCheckTarget ? this.data.months[a.lastCheckTarget.month] : "";
+
+                    if (st === "EXPIRED") {
+                        bg = `<span class="bg-red-100 text-red-900 py-1 px-2 rounded-full text-[10px] font-bold border border-red-300">EXPIRED</span>`;
+                    } else if (st === "BAIK") {
+                        bg = `<span class="bg-green-100 text-green-700 py-1 px-2 rounded-full text-[10px] font-bold border border-green-200">BAIK (${mN})</span>`;
+                    } else if (st === "HARUS DIISI ULANG") {
+                        bg = `<span class="bg-purple-100 text-purple-700 py-1 px-2 rounded-full text-[10px] font-bold border border-purple-200">ISI ULANG (${mN})</span>`;
+                    } else if (st === "RUSAK") {
+                        bg = `<span class="bg-red-100 text-red-700 py-1 px-2 rounded-full text-[10px] font-bold border border-red-200">RUSAK (${mN})</span>`;
+                    }
+
+                    const eD = `<span class="${a.isExpired?'text-red-600 font-bold bg-red-50 px-1 rounded':''}">${new Date(a.expiredDate).toLocaleDateString('id-ID')}</span>`;
+                    const rD = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : "-";
+                    let b = parseFloat(String(a.berat).replace(',', '.')); if(isNaN(b)) b=0; 
+                    
+                    tb.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                        <td class="py-4 px-4 font-bold text-gray-700 text-xs">${a.kode}</td>
+                        <td class="py-4 px-4 text-xs text-gray-600">${a.lokasi}</td>
+                        <td class="py-4 px-4 text-center text-xs"><b>${a.jenis}</b><br><span class="text-gray-400">${b} kg</span></td>
+                        <td class="py-4 px-4 text-center text-xs text-gray-500">${rD}</td>
+                        <td class="py-4 px-4 text-center text-xs">${eD}</td>
+                        <td class="py-4 px-4 text-center">${bg}</td>
+                        <td class="py-4 px-4 text-center flex justify-center gap-2 admin-only">
+                            <button onclick="app.showChecklistForm('${String(a.id)}')" class="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100 transition shadow-sm" title="Ceklis"><i class="fa-solid fa-check"></i></button>
+                            <button onclick="app.showDetail('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="Detail"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="app.printLabel('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
+                            <button onclick="app.deleteApar('${String(a.id)}')" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                        </td></tr>`;
+                });
                 pItems.forEach(a => {
                     let lC;
                     if (sMonth !== "") lC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); else lC = this.getLastCheck(a.id);
