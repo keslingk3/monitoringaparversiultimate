@@ -816,7 +816,8 @@
                         } 
                         tL.classList.remove('hidden'); tL.style.display = 'block';
                     } 
-                    document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + new Date(lC.timestamp).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}); 
+                    let checkDate = lC.timestamp ? new Date(lC.timestamp) : new Date();
+document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + (!isNaN(checkDate) ? checkDate.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : "-"); 
                 } else { 
                     sB.className = "mb-6 p-4 rounded-lg text-center bg-gray-100 border border-gray-300"; 
                     document.getElementById('scanStatusText').innerHTML = "BELUM ADA DATA"; 
@@ -826,7 +827,7 @@
 
             renderMiniHistory: function(id, tId) { 
                 const c = document.getElementById(tId); c.innerHTML = ''; 
-                const h = this.data.checks.filter(x => String(x.aparId) === String(id)).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 12); 
+                const h = this.data.checks.filter(x => String(x.aparId) === String(id)).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0)).slice(0, 12); 
                 h.forEach(x => { 
                     const isG = String(x.isGood).toLowerCase() === 'true'; 
                     let stTxt = isG ? 'BAIK' : 'RUSAK';
@@ -838,12 +839,16 @@
                         stCol = 'text-purple-700 border-purple-600 bg-purple-50';
                         icon = 'fa-fill-drip text-purple-600';
                     }
+                    
+                    // 🚀 LOGIKA PENCEGAH INVALID DATE
+                    let tglValid = x.timestamp ? new Date(x.timestamp) : new Date();
+                    let formatTgl = !isNaN(tglValid) ? tglValid.toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'}) : "-";
 
                     c.innerHTML += `<div class="p-3 rounded-lg border ${isG ? 'bg-green-50 border-green-200' : (stTxt === 'ISI ULANG' ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200')} flex items-start gap-3 relative group">
                         <i class="fa-solid ${icon} mt-1"></i>
                         <div class="flex-1">
                             <div class="flex justify-between items-center">
-                                <span class="font-bold text-xs uppercase">${new Date(x.timestamp).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'})}</span>
+                                <span class="font-bold text-xs uppercase">${formatTgl}</span>
                                 <span class="text-[10px] font-bold border border-current px-1 rounded ${stCol.split(' ')[0]}">${stTxt}</span>
                             </div>
                             <div class="text-xs italic text-gray-600 mt-1">"${x.notes}"</div>
@@ -911,8 +916,18 @@
             deleteApar: async function(id) { if(confirm('Hapus Permanen?')) { await this.sendData({ action: "deleteApar", id: id }); this.renderDashboard(); } },
             openMoveModal: function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); if(!a) return; document.getElementById('moveCurrentLoc').innerText = a.lokasi; document.getElementById('moveNewLoc').value = ""; document.getElementById('movePetugas').value = localStorage.getItem('petugasName') || ""; document.getElementById('moveAparModal').classList.remove('hidden'); },
             submitMove: async function() { const id = this.data.currentDetailId; const a = this.data.apars.find(x => String(x.id) == String(id)); const nl = document.getElementById('moveNewLoc').value.trim(); if(!nl) return alert("Lokasi baru kosong!"); const p = { action: "moveApar", id: id, oldLokasi: a.lokasi, newLokasi: nl, petugas: document.getElementById('movePetugas').value.trim(), timestamp: new Date() }; await this.sendData(p); document.getElementById('moveAparModal').classList.add('hidden'); this.showDetail(id); },
-            renderMovementHistory: function(id) { const c = document.getElementById('movementHistoryBody'); c.innerHTML = ''; const h = this.data.movements.filter(x => String(x.aparId) == String(id)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)); if(h.length===0){c.innerHTML='<div class="text-xs text-gray-400 italic text-center">Belum ada riwayat.</div>';return;} h.forEach(m => { c.innerHTML += `<div class="flex items-start gap-2 text-xs border-b border-gray-100 pb-2"><i class="fa-solid fa-arrow-right text-orange-500 mt-0.5"></i><div><div class="font-bold text-gray-700">${new Date(m.timestamp).toLocaleDateString('id-ID')}</div><div class="text-gray-600">Dari: <span class="font-semibold line-through text-red-400">${m.oldLocation}</span></div><div class="text-gray-600">Ke: <span class="font-semibold text-green-600">${m.newLocation}</span></div><div class="text-gray-400 text-[10px] mt-0.5">Oleh: ${m.petugas || '-'}</div></div></div>`; }); },
-
+            renderMovementHistory: function(id) { 
+                const c = document.getElementById('movementHistoryBody'); c.innerHTML = ''; 
+                const h = this.data.movements.filter(x => String(x.aparId) == String(id)).sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0)); 
+                if(h.length===0){c.innerHTML='<div class="text-xs text-gray-400 italic text-center">Belum ada riwayat.</div>';return;} 
+                h.forEach(m => { 
+                    // 🚀 LOGIKA PENCEGAH INVALID DATE
+                    let d = m.timestamp ? new Date(m.timestamp) : new Date();
+                    let dStr = !isNaN(d) ? d.toLocaleDateString('id-ID') : "-";
+                    
+                    c.innerHTML += `<div class="flex items-start gap-2 text-xs border-b border-gray-100 pb-2"><i class="fa-solid fa-arrow-right text-orange-500 mt-0.5"></i><div><div class="font-bold text-gray-700">${dStr}</div><div class="text-gray-600">Dari: <span class="font-semibold line-through text-red-400">${m.oldLocation}</span></div><div class="text-gray-600">Ke: <span class="font-semibold text-green-600">${m.newLocation}</span></div><div class="text-gray-400 text-[10px] mt-0.5">Oleh: ${m.petugas || '-'}</div></div></div>`; 
+                }); 
+            },
             openExportModal: function() {
                 const em = document.getElementById('exportModal');
                 em.classList.remove('hidden');
