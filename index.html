@@ -816,7 +816,8 @@
                         } 
                         tL.classList.remove('hidden'); tL.style.display = 'block';
                     } 
-                    let checkDate = lC.timestamp ? new Date(lC.timestamp) : new Date();
+                   let safeBannerTs = lC.timestamp ? String(lC.timestamp).replace(',', '.') : null;
+let checkDate = safeBannerTs ? new Date(safeBannerTs) : new Date();
 document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + (!isNaN(checkDate) ? checkDate.toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : "-"); 
                 } else { 
                     sB.className = "mb-6 p-4 rounded-lg text-center bg-gray-100 border border-gray-300"; 
@@ -827,7 +828,14 @@ document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + (!isNaN
 
             renderMiniHistory: function(id, tId) { 
                 const c = document.getElementById(tId); c.innerHTML = ''; 
-                const h = this.data.checks.filter(x => String(x.aparId) === String(id)).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0)).slice(0, 12); 
+                
+                // Urutkan dengan logika anti-koma
+                const h = this.data.checks.filter(x => String(x.aparId) === String(id)).sort((a, b) => {
+                    let timeA = a.timestamp ? new Date(String(a.timestamp).replace(',', '.')) : 0;
+                    let timeB = b.timestamp ? new Date(String(b.timestamp).replace(',', '.')) : 0;
+                    return timeB - timeA;
+                }).slice(0, 12); 
+
                 h.forEach(x => { 
                     const isG = String(x.isGood).toLowerCase() === 'true'; 
                     let stTxt = isG ? 'BAIK' : 'RUSAK';
@@ -840,9 +848,17 @@ document.getElementById('scanStatusDate').innerText = "Cek Terakhir: " + (!isNaN
                         icon = 'fa-fill-drip text-purple-600';
                     }
                     
-                    // 🚀 LOGIKA PENCEGAH INVALID DATE
-                    let tglValid = x.timestamp ? new Date(x.timestamp) : new Date();
-                    let formatTgl = !isNaN(tglValid) ? tglValid.toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'}) : "-";
+                    // 🚀 LOGIKA PENCEGAH INVALID DATE & KOMA
+                    let formatTgl = "-";
+                    let safeTs = x.timestamp ? String(x.timestamp).replace(',', '.') : null;
+                    let d = new Date(safeTs);
+                    
+                    if (safeTs && !isNaN(d.getTime())) {
+                        formatTgl = d.toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'2-digit'});
+                    } else if (x.month !== undefined && x.year !== undefined && !isNaN(x.month)) {
+                        const namaBulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                        formatTgl = `?? ${namaBulan[x.month]} ${String(x.year).slice(-2)}`;
+                    }
 
                     c.innerHTML += `<div class="p-3 rounded-lg border ${isG ? 'bg-green-50 border-green-200' : (stTxt === 'ISI ULANG' ? 'bg-purple-50 border-purple-200' : 'bg-red-50 border-red-200')} flex items-start gap-3 relative group">
                         <i class="fa-solid ${icon} mt-1"></i>
