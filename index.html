@@ -783,37 +783,6 @@
                             <button onclick="app.deleteApar('${String(a.id)}')" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
                         </td></tr>`;
                 });
-                pItems.forEach(a => {
-                    let lC;
-                    if (sMonth !== "") lC = this.data.checks.find(c => String(c.aparId) === String(a.id) && String(c.year) === String(sYear) && String(c.month) === String(sMonth)); else lC = this.getLastCheck(a.id);
-                    const isExp = new Date(a.expiredDate) < new Date(); 
-                    let bg = '<span class="bg-gray-100 text-gray-400 py-1 px-2 rounded-full text-[10px] font-bold">BELUM</span>';
-                    
-                    if (isExp) { bg = `<span class="bg-red-100 text-red-700 py-1 px-2 rounded-full text-[10px] font-bold border border-red-200">EXPIRED</span>`; } 
-                    
-                    if (lC) { 
-                        const isG = String(lC.isGood).toLowerCase() === 'true'; const mN = this.data.months[lC.month];
-                        if (isG) { bg = `<span class="bg-green-100 text-green-700 py-1 px-2 rounded-full text-[10px] font-bold border border-green-200">BAIK (${mN})</span>`; } 
-                        else { if (lC.notes && lC.notes.includes('HARUS DIISI ULANG')) { bg = `<span class="bg-purple-100 text-purple-700 py-1 px-2 rounded-full text-[10px] font-bold border border-purple-200">APAR HARUS DIISI ULANG (${mN})</span>`; } else { bg = `<span class="bg-red-100 text-red-700 py-1 px-2 rounded-full text-[10px] font-bold border border-red-200">RUSAK (${mN})</span>`; } }
-                    }
-                    const eD = `<span class="${isExp?'text-red-600 font-bold bg-red-50 px-1 rounded':''}">${new Date(a.expiredDate).toLocaleDateString('id-ID')}</span>`;
-                    const rD = a.refillDate ? new Date(a.refillDate).toLocaleDateString('id-ID') : "-";
-                    let b = parseFloat(String(a.berat).replace(',', '.')); if(isNaN(b)) b=0; 
-                    
-                    tb.innerHTML += `<tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                        <td class="py-4 px-4 font-bold text-gray-700 text-xs">${a.kode}</td>
-                        <td class="py-4 px-4 text-xs text-gray-600">${a.lokasi}</td>
-                        <td class="py-4 px-4 text-center text-xs"><b>${a.jenis}</b><br><span class="text-gray-400">${b} kg</span></td>
-                        <td class="py-4 px-4 text-center text-xs text-gray-500">${rD}</td>
-                        <td class="py-4 px-4 text-center text-xs">${eD}</td>
-                        <td class="py-4 px-4 text-center">${bg}</td>
-                        <td class="py-4 px-4 text-center flex justify-center gap-2 admin-only">
-                            <button onclick="app.showChecklistForm('${String(a.id)}')" class="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100 transition shadow-sm" title="Ceklis"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="app.showDetail('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="Detail"><i class="fa-solid fa-eye"></i></button>
-                            <button onclick="app.printLabel('${String(a.id)}')" class="bg-gray-50 text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition shadow-sm" title="QR Code"><i class="fa-solid fa-qrcode"></i></button>
-                            <button onclick="app.deleteApar('${String(a.id)}')" class="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition shadow-sm" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-                        </td></tr>`;
-                });
             },
             renderDashboardMovements: function() { const c = document.getElementById('dashboardMovements'); c.innerHTML = ''; const m = [...this.data.movements].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 5); if(m.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center p-2">Belum ada riwayat perpindahan.</div>'; return; } m.forEach(x => { const a = this.data.apars.find(z => String(z.id) == String(x.aparId)); const k = a ? a.kode : 'APAR Terhapus'; c.innerHTML += `<div class="flex items-center gap-3 text-xs border-b border-gray-100 pb-2 p-1 hover:bg-orange-50 rounded"><div class="bg-orange-100 text-orange-600 p-1.5 rounded-full"><i class="fa-solid fa-arrow-right-arrow-left"></i></div><div class="flex-1"><div class="flex justify-between"><span class="font-bold text-gray-700">${k}</span><span class="text-[10px] text-gray-400">${new Date(x.timestamp).toLocaleDateString('id-ID')}</span></div><div class="flex items-center gap-1 mt-0.5"><span class="line-through text-red-400">${x.oldLocation}</span><i class="fa-solid fa-arrow-right text-[8px] text-gray-400"></i><span class="font-bold text-green-600">${x.newLocation}</span></div></div></div>`; }); },
             toggleNotifications: function(e) { e.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('hidden'); },
